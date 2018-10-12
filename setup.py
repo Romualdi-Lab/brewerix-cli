@@ -13,7 +13,7 @@ setup(
     long_description="""
             Collection of tools to perform loss of imprinting analysis.
         """,
-    url="",
+    url="https://gitlab.romualdi.bio.unipd.it:workflow/guess_loi.git",
     packages=find_packages(),
     entry_points={
         'console_scripts': [
