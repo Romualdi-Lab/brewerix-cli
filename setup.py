@@ -18,6 +18,7 @@ setup(
     entry_points={
         'console_scripts': [
             'guess_loi=workflow.guess_loi.guess_loi:guess_loi',
+            'format_ase=workflow.guess_loi.format_ase:format_ase',
         ],
     }
 )
