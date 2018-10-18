@@ -3,7 +3,7 @@ from sys import argv, stdout
 
 def format_ase():
     with open(argv[1], 'r') as fd:
-        format_ase_internal(fd)
+        format_ase_internal(fd, intermediate=stdout)
 
 
 def format_ase_internal(fd, intermediate):
@@ -17,6 +17,7 @@ def format_ase_internal(fd, intermediate):
         alt = tokens[6]
         ref_alt = ','.join([ref, alt])
         intermediate.write(id + '\t' + ref_alt + '\n')
+
 
 if __name__ == '__main__':
     format_ase()

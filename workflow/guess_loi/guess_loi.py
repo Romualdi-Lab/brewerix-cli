@@ -24,13 +24,50 @@ def guess_loi():
     # create RG tags, if need be
 
     aser_count(gatk, bams, SNPs, bed, samples)
+    format_ase_cicle(samples)
+    collapse_ase(samples)
 
+
+
+def format_ase_cicle(samples):
     for sample in samples:
         intermediate_file = ''.join([sample, ".ASER.txt"])
         with open(intermediate_file, 'r') as fd:
-            intermediate_out =''.join([sample, ".aser"])
+            intermediate_out = ''.join([sample, ".aser"])
             with open(intermediate_out, "w") as intermediate:
                 format_ase_internal(fd, intermediate)
+
+
+def collapse_ase(samples):
+    all_dictionaries, all_keys = create_keys_dictionaris(samples)
+    intermediate_table_file = "ASER_table.txt"
+    with open(intermediate_table_file, 'w') as tbl:
+        collapse(all_dictionaries, all_keys, tbl)
+
+
+def create_keys_dictionaris(samples):
+    all_dictionaries = []
+    all_keys = []
+    for sample in samples:
+        intermediate_file = ''.join([sample, ".aser"])
+
+        with open(intermediate_file, 'r') as fd:
+            d = {}
+            for line in fd:
+                key, value = line.rstrip('\n').split('\t')
+                d[key] = value
+            all_dictionaries.append(d)
+            all_keys = set(all_keys + d.keys())
+    return all_dictionaries, all_keys
+
+
+def collapse(all_dictionaries, all_keys, tbl):
+    for k in all_keys:
+        line_values = [k]
+        for dict in all_dictionaries:
+            value = dict[k] if k in dict else './.'
+            line_values.append(value)
+        tbl.write('\t'.join(line_values) + '\n')
 
 
 def check_gatk(gatk='~/local/bin/gatk'):
