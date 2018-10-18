@@ -1,10 +1,18 @@
 import re
+from itertools import groupby
+from operator import itemgetter
 from sys import argv
 
 
 def snp2gene():
+    """
+    takes 2 argument:
+        file (list of ids in 1st column or VCF) woth SNPs) argv1
+        bed_file (interesting gene in bed format) argv[2]
+    """
     vcf_file = argv[1]
-    snp2gene_association_from_vcf(vcf_file)
+    bed_file = argv[2]
+    snp2gene_association_from_bed(vcf_file, bed_file)
 
 def snp2gene_association_from_vcf(vcf_file):
     with open(vcf_file, 'r') as fd:
@@ -23,6 +31,74 @@ def snp2gene_association_from_vcf(vcf_file):
             for gene_info in gene_infos[0].split('|'):
                 entrez, symbol = gene_info.split(':')
                 print(base_id + '\t' + symbol + '\t' + entrez)
+
+
+def snp2gene_association_from_bed(vcf_file, bed_file):
+    bedidx = create_bed_index(bed_file)
+
+    with open(vcf_file, 'r') as fd:
+        for idx, line in enumerate(fd):
+            if line[0] == '#':
+                continue
+            chr, pos, id, ref, alt, *infos= line.rstrip('\n').split('\t')
+            snp_internal_id = '_'.join([chr, pos, id, ref, alt])
+
+            if chr in bedidx:
+                for start, stop, gene, _strand in bedidx[chr]:
+                    if start <= pos and stop >= pos:
+
+                        print(snp_internal_id + '\t' + gene)
+
+def snp2gene_association_from_bed(file, bed_file, from_vcf=False):
+    bedidx = create_bed_index(bed_file)
+
+    with open(file, 'r') as fd:
+        for idx, line in enumerate(fd):
+            if line[0] == '#':
+                continue
+
+            if from_vcf:
+                chr, pos, id, ref, alt, *infos= line.rstrip('\n').split('\t')
+            else:
+                tks = line.rstrip('\n').split('\t')
+                chr, pos, id, ref, alt = tks[0].split("_")
+
+            snp_internal_id = '_'.join([chr, pos, id, ref, alt])
+
+            if chr in bedidx:
+                for start, stop, gene, _strand in bedidx[chr]:
+                    if start <= pos and stop >= pos:
+
+                        print(snp_internal_id + '\t' + gene)
+
+
+def create_bed_index(bed_file):
+    with open(bed_file, 'r') as fd:
+        d = {}
+        for id, grp in groupby(read_line(fd), itemgetter(0)):
+            grp = [ elem[1] for elem in grp ]
+            d[str(id)] = grp
+        return d
+
+
+def read_line(fd):
+    pre_id = None
+    length_t = None
+
+    for lineidx, line in enumerate(fd):
+        tokens = line.rstrip().split('\t')
+        if length_t is not None and length_t != len(tokens):
+            exit("Malformed input: incorrect number of columns at line %s" % (lineidx + 1))
+        length_t = len(tokens)
+
+        if pre_id is not None and tokens[0] < pre_id:
+            exit("Malformed input: lexicographically sorted on col 1 at line %s" % (lineidx + 1))
+        pre_id = tokens[0]
+
+        key = tokens[0]
+        info = tokens[1:]
+
+        yield key, info
 
 if __name__ == '__main__':
     snp2gene()
