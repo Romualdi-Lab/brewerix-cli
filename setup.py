@@ -20,6 +20,7 @@ setup(
             'guess_loi=workflow.guess_loi.guess_loi:guess_loi',
             'format_ase=workflow.guess_loi.format_ase:format_ase',
             'snp2gene=workflow.guess_loi.snp_gene_association:snp2gene',
+            'compact-snp=workflow.guess_loi.filter_count_compress_output:compact_snps',
         ],
     }
 )
