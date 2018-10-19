@@ -2,6 +2,7 @@ from os.path import expanduser
 from subprocess import call, DEVNULL
 from sys import argv
 
+from workflow.guess_loi.checks import check_gatk
 from workflow.guess_loi.format_ase import format_ase_internal
 
 
@@ -26,7 +27,29 @@ def guess_loi():
     aser_count(gatk, bams, SNPs, bed, samples)
     format_ase_cicle(samples)
     collapse_ase(samples)
+    get_ASE_table()
 
+def aser_count(gatk, bams, SNPs, bed, samples):
+    # run aser count
+    # format the results
+    # annotate with bed file
+    # create allele count info (compress the output)
+    for bam, sample in zip(bams, samples):
+        run_aser_on_bam(gatk, bam, SNPs, "genome-sort.fa", sample)
+
+
+
+def run_aser_on_bam(gatk, bam, vcf, genome, sample):
+    call([gatk, "ASEReadCounter",
+          "-I", bam,
+          "-V", vcf,
+          "-R", genome,
+          "-O", ''.join([ sample,".ASER.txt"])])
+
+
+def get_ASE_table(file="ASER_table.txt"):
+    with open(file, 'r') as tbl:
+        compact_snps_core(tbl, gene_col=5)
 
 
 def format_ase_cicle(samples):
@@ -70,33 +93,6 @@ def collapse(all_dictionaries, all_keys, tbl):
         tbl.write('\t'.join(line_values) + '\n')
 
 
-def check_gatk(gatk='~/local/bin/gatk'):
-    try:
-        gatk = gatk.replace("~", expanduser("~"))
-        call([gatk, "--list"],
-             stdin=DEVNULL, stdout=DEVNULL, stderr=DEVNULL)
-    except FileNotFoundError as e:
-        print("check if gatk is installed.")
-        exit(134)
-
-    return(gatk)
-
-def aser_count(gatk, bams, SNPs, bed, samples):
-    # run aser count
-    # format the results
-    # annotate with bed file
-    # create allele count info (compress the output)
-    for bam, sample in zip(bams, samples):
-        run_aser_on_bam(gatk, bam, SNPs, "genome-sort.fa", sample)
-
-
-
-def run_aser_on_bam(gatk, bam, vcf, genome, sample):
-    call([gatk, "ASEReadCounter",
-          "-I", bam,
-          "-V", vcf,
-          "-R", genome,
-          "-O", ''.join([ sample,".ASER.txt"])])
 
 
 if __name__ == '__main__':
