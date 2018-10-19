@@ -21,6 +21,8 @@ setup(
             'format_ase=workflow.guess_loi.format_ase:format_ase',
             'snp2gene=workflow.guess_loi.snp_gene_association:snp2gene',
             'compact-snp=workflow.guess_loi.filter_count_compress_output:compact_snps',
+            'hisat2-buildIndex=workflow.guess_loi.hisat_build_index:hisat_build_index',
+            'run-hisat2=workflow.guess_loi.hisat2_align:run_hisat2',
         ],
     }
 )

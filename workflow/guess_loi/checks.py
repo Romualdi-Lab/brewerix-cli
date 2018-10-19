@@ -1,6 +1,7 @@
 from subprocess import call
 
 from os.path import exists
+from tempfile import TemporaryFile
 
 
 def check_file_exists(file):
@@ -20,10 +21,12 @@ def check_gatk(gatk='~/local/bin/gatk'):
 
 
 def check_hisat2_installation():
-    with TemporaryFile() as e:
+    with TemporaryFile('w+t') as e:
         call(["hisat2", "--version"], stderr=e)
+        line = e.readline()
 
-    line = e.readline()
-    if line.find("hisat2: command not found") >0:
-        print("error: hisat2 not found")
-        exit(202)
+        print(type(line))
+
+        if line.find("hisat2: command not found") >0:
+            print("error: hisat2 not found")
+            exit(202)

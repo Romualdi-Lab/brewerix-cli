@@ -93,8 +93,6 @@ def collapse(all_dictionaries, all_keys, tbl):
         tbl.write('\t'.join(line_values) + '\n')
 
 
-
-
 if __name__ == '__main__':
     guess_loi()
 
