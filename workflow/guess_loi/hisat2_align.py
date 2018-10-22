@@ -1,10 +1,11 @@
 from os.path import basename
-from re import sub
 from subprocess import call
 from sys import argv
 from tempfile import NamedTemporaryFile
 
 from workflow.guess_loi.checks import check_file_exists
+from workflow.guess_loi.common_utility import guess_sample_name
+from workflow.guess_loi.samtools_wrappers import samtools_sort
 
 
 def run_hisat2():
@@ -40,14 +41,19 @@ def run_hisat2():
 def align_genome_single_end(fq, threads, index_dir_prefix, thread_sam='1'):
     check_file_exists(fq)
 
-    sample = sub(r'\.fq(\.gz)*$', '', fq)
-    output_file = basename(sample) + '.bam'
+    sample = basename(guess_sample_name(fq))
+    output_file = sample + '.bam'
     # TODO:  --rna-strandness RF evaluate strandness
 
     with NamedTemporaryFile(suffix=".sam") as sam:
         print(sam.name)
         cmd = ['hisat2',
                '-p', threads,
+               '--rg-id', sample,
+               '--rg', "LB:" + sample,
+               '--rg', "PL:platform",
+               '--rg', "PU:S_" + sample,
+               '--rg', "SM:" + sample,
                '-x', index_dir_prefix,
                '-U', fq, sam.name]
         print(' '.join(cmd))
@@ -56,19 +62,11 @@ def align_genome_single_end(fq, threads, index_dir_prefix, thread_sam='1'):
         samtools_sort(output_file, sam, thread_sam)
 
 
-def samtools_sort(output_file, sam, thread_sam):
-    with NamedTemporaryFile(suffix=".bam") as bam:
-        call(["samtools", "view", "-u", "-o", bam.name, sam.name])
-
-        sam_cmd = ["samtools", "sort", "-l", "9", "-m", "1G", "-@", thread_sam, "-o", output_file, bam.name]
-        call(sam_cmd)
-
-
 def align_genome_paired_end(fq1, fq2, threads, index_dir_prefix, thread_sam='1'):
     check_file_exists(fq1)
     check_file_exists(fq2)
 
-    sample = sub(r'_R?1\.fq(\.gz)*$', '', fq1)
+    sample = guess_sample_name(fq1, paired=True)
 
     # TODO:  --rna-strandness RF evaluate strandness
     output_file = basename(sample) + '.bam'
@@ -76,6 +74,11 @@ def align_genome_paired_end(fq1, fq2, threads, index_dir_prefix, thread_sam='1')
         print(sam.name)
         cmd = ['hisat2',
                '-p', threads,
+               '--rg-id', sample,
+               '--rg', "LB:" + sample,
+               '--rg', "PL:platform",
+               '--rg', "PU:" + sample,
+               '--rg', "SM:" + sample,
                '-x', index_dir_prefix,
                '-1', fq1,
                '-2', fq2, sam.name]
@@ -83,6 +86,7 @@ def align_genome_paired_end(fq1, fq2, threads, index_dir_prefix, thread_sam='1')
         call(cmd)
 
         samtools_sort(output_file, sam, thread_sam)
+
 
 
 if __name__ == '__main__':
