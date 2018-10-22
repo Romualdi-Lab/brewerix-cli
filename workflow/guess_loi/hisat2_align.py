@@ -2,9 +2,10 @@ from os.path import basename
 from re import sub
 from subprocess import call
 from sys import argv
-from tempfile import TemporaryFile, mktemp, NamedTemporaryFile
+from tempfile import NamedTemporaryFile
 
 from workflow.guess_loi.checks import check_file_exists
+
 
 def run_hisat2():
     if (len(argv) == 1):

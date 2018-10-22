@@ -1,16 +1,17 @@
-from os.path import expanduser
-from subprocess import call, DEVNULL
+from subprocess import call
 from sys import argv
 
 from workflow.guess_loi.checks import check_gatk
+from workflow.guess_loi.filter_count_compress_output import compact_snps_core
 from workflow.guess_loi.format_ase import format_ase_internal
 
 
 def guess_loi():
     print(argv)
-    bams = argv[3:]
     SNPs = argv[1]
     bed = argv[2]
+    genome = argv[3]
+    bams = argv[4:]
     samples = [ bam.rstrip(".bam") for bam in bams ]
 
     print(bams)
@@ -24,18 +25,18 @@ def guess_loi():
     # sort bam if need be
     # create RG tags, if need be
 
-    aser_count(gatk, bams, SNPs, bed, samples)
+    aser_count(gatk, bams, SNPs, genome, samples)
     format_ase_cicle(samples)
     collapse_ase(samples)
     get_ASE_table()
 
-def aser_count(gatk, bams, SNPs, bed, samples):
+def aser_count(gatk, bams, SNPs, genome, samples):
     # run aser count
     # format the results
     # annotate with bed file
     # create allele count info (compress the output)
     for bam, sample in zip(bams, samples):
-        run_aser_on_bam(gatk, bam, SNPs, "genome-sort.fa", sample)
+        run_aser_on_bam(gatk, bam, SNPs, genome, sample)
 
 
 
@@ -70,7 +71,7 @@ def collapse_ase(samples):
 
 def create_keys_dictionaris(samples):
     all_dictionaries = []
-    all_keys = []
+    all_keys = set()
     for sample in samples:
         intermediate_file = ''.join([sample, ".aser"])
 
@@ -80,7 +81,7 @@ def create_keys_dictionaris(samples):
                 key, value = line.rstrip('\n').split('\t')
                 d[key] = value
             all_dictionaries.append(d)
-            all_keys = set(all_keys + d.keys())
+            all_keys = set(all_keys + set(d.keys()))
     return all_dictionaries, all_keys
 
 

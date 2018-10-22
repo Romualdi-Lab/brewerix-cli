@@ -1,6 +1,5 @@
-from subprocess import call
-
-from os.path import exists
+from os.path import exists, expanduser
+from subprocess import call, DEVNULL
 from tempfile import TemporaryFile
 
 
