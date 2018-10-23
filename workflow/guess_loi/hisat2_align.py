@@ -9,7 +9,7 @@ from workflow.guess_loi.samtools_wrappers import samtools_sort
 
 
 def run_hisat2():
-    if (len(argv) == 1):
+    if len(argv) == 1:
         print("run-hisat2 paired|single fq1 [fq2] threads index")
         exit(0)
     mode = argv[1]
@@ -29,13 +29,12 @@ def run_hisat2():
             print("Unexpected parameter")
             exit(434)
 
-        fq=argv[2]
-        threads=argv[3]
-        index=argv[4]
+        fq = argv[2]
+        threads = argv[3]
+        index = argv[4]
         align_genome_single_end(fq, threads, index)
     else:
         print("run-hisat2 paired|single fq1 [fq2] threads index")
-
 
 
 def align_genome_single_end(fq, threads, index_dir_prefix, thread_sam='1'):
@@ -90,7 +89,5 @@ def align_genome_paired_end(fq1, fq2, threads, index_dir_prefix, thread_sam='1')
         samtools_sort(output_file, sam, thread_sam)
 
 
-
 if __name__ == '__main__':
     run_hisat2()
-

@@ -9,6 +9,7 @@ def compact_snps():
     with open(table, 'r') as fd:
         compact_snps_core(fd, gene_col, "/dev/stdout")
 
+
 def compact_snps_core(fd, gene_col=5, out_file_name="final-output-table.txt"):
     with open(out_file_name, "w") as out:
         first_line = True
@@ -41,8 +42,8 @@ def compact_snps_core(fd, gene_col=5, out_file_name="final-output-table.txt"):
 
             if len(interesting_snp) == 0:
                 line = values[0]
-                refAltFake = zip(overall_gene, [0 for i in range(len(overall_gene))])
-                overall_gene = [','.join([str(v) for v in x]) for x in refAltFake]
+                ref_alt_fake = zip(overall_gene, [0 for _ in range(len(overall_gene))])
+                overall_gene = [','.join([str(v) for v in x]) for x in ref_alt_fake]
                 annot = line[:(gene_col + 1)]
                 annot[2] = "rs_multi"
                 output = annot + overall_gene
@@ -72,8 +73,8 @@ def sort_file_by_gene_name(in_file, out_file):
                 d[key] = [line]
 
         for k in sorted(d.keys()):
-            str = ''.join(d[k])
-            out.write(str)
+            out_str = ''.join(d[k])
+            out.write(out_str)
 
 
 def iter_snp(fd, gene_col):

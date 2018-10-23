@@ -12,16 +12,16 @@ def format_ase_internal(fd, intermediate, min_coverage=5):
         if len(tokens) < 7:
             print("less than 7 tokens at line " + str(idx + 1))
 
-        id = '_'.join(tokens[:5])
+        gene_id = '_'.join(tokens[:5])
         ref = tokens[5]
         alt = tokens[6]
         if idx == 0:
             ref_alt = ','.join([ref, alt])
-            intermediate.write(id + '\t' + ref_alt + '\n')
+            intermediate.write(gene_id + '\t' + ref_alt + '\n')
         else:
             if int(ref) + int(alt) >= min_coverage:
                 ref_alt = ','.join([ref, alt])
-                intermediate.write(id + '\t' + ref_alt + '\n')
+                intermediate.write(gene_id + '\t' + ref_alt + '\n')
 
 
 if __name__ == '__main__':

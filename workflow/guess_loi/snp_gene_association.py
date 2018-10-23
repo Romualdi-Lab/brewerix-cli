@@ -41,50 +41,50 @@ def snp2gene_association_from_bed(vcf_file, bed_file):
         for idx, line in enumerate(fd):
             if line[0] == '#':
                 continue
-            chr, pos, id, ref, alt, *infos= line.rstrip('\n').split('\t')
-            snp_internal_id = '_'.join([chr, pos, id, ref, alt])
+            chromosome, pos, rs_id, ref, alt, *infos = line.rstrip('\n').split('\t')
+            snp_internal_id = '_'.join([chromosome, pos, rs_id, ref, alt])
 
-            if chr in bedidx:
-                for start, stop, gene, _strand in bedidx[chr]:
-                    if start <= pos and stop >= pos:
+            if chromosome in bedidx:
+                for start, stop, gene, _strand in bedidx[chromosome]:
+                    if start <= pos <= stop:
 
                         print(snp_internal_id + '\t' + gene)
 
 
 def annotate():
-    aserTable = argv[1]
+    aser_table = argv[1]
     bed_file = argv[2]
     output_file = argv[3]
-    annotate_aserTable_from_bed(aserTable, bed_file, output_file)
+    annotate_aser_table_from_bed(aser_table, bed_file, output_file)
 
 
-def annotate_aserTable_from_bed(aserTable, bed_file, output_table):
+def annotate_aser_table_from_bed(aser_table, bed_file, output_table):
     # the first column is the id. The rest are the values.
     bedidx = create_bed_index(bed_file)
 
-    with open(aserTable, 'r') as fd, open(output_table, 'w') as out:
+    with open(aser_table, 'r') as fd, open(output_table, 'w') as out:
         for idx, line in enumerate(fd):
             tks = line.rstrip('\n').split('\t')
-            chr, pos, id, ref, alt = tks[0].split("_")
-            snp_internal_id_expand = '\t'.join([chr, pos, id, ref, alt])
+            chromosome, pos, rs_id, ref, alt = tks[0].split("_")
+            snp_internal_id_expand = '\t'.join([chromosome, pos, rs_id, ref, alt])
             values = '\t'.join(tks[1:])
 
-            if (idx == 0):
+            if idx == 0:
                 out.write(snp_internal_id_expand + '\t' + "symbol" + '\t' + values + '\n')
                 continue
 
-            if chr in bedidx:
-                for start, stop, gene, _strand in bedidx[chr]:
-                    if start <= pos and stop >= pos:
+            if chromosome in bedidx:
+                for start, stop, gene, _strand in bedidx[chromosome]:
+                    if start <= pos <= stop:
                         out.write(snp_internal_id_expand + '\t' + gene + '\t' + values + '\n')
 
 
 def create_bed_index(bed_file):
     with open(bed_file, 'r') as fd:
         d = {}
-        for id, grp in groupby(read_line(fd), itemgetter(0)):
-            grp = [ elem[1] for elem in grp ]
-            d[str(id)] = grp
+        for chromosome, grp in groupby(read_line(fd), itemgetter(0)):
+            grp = [elem[1] for elem in grp]
+            d[str(chromosome)] = grp
         return d
 
 
@@ -107,5 +107,6 @@ def read_line(fd):
 
         yield key, info
 
+
 if __name__ == '__main__':
-    annotate_aserTable_from_bed()
+    annotate()
