@@ -68,12 +68,14 @@ def sort_file_by_gene_name(in_file, out_file):
             key = tks[5]
 
             if key in d:
-                d[key].append(line)
+                d[key].append(tks)
             else:
-                d[key] = [line]
+                d[key] = [tks]
 
         for k in sorted(d.keys()):
-            out_str = ''.join(d[k])
+            d[k] = sorted(d[k], key=lambda x: int(x[1]))
+            lines = ['\t'.join(l) for l in d[k]]
+            out_str = ''.join(lines)
             out.write(out_str)
 
 
