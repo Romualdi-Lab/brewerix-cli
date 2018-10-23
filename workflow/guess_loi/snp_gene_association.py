@@ -7,12 +7,13 @@ from sys import argv
 def snp2gene():
     """
     takes 2 argument:
-        file (list of ids in 1st column or VCF) woth SNPs) argv1
+        file (list of ids in 1st column or VCF) with SNPs) argv1
         bed_file (interesting gene in bed format) argv[2]
     """
     vcf_file = argv[1]
     bed_file = argv[2]
     snp2gene_association_from_bed(vcf_file, bed_file)
+
 
 def snp2gene_association_from_vcf(vcf_file):
     with open(vcf_file, 'r') as fd:
@@ -49,27 +50,33 @@ def snp2gene_association_from_bed(vcf_file, bed_file):
 
                         print(snp_internal_id + '\t' + gene)
 
-def snp2gene_association_from_bed(file, bed_file, from_vcf=False):
+
+def annotate():
+    aserTable = argv[1]
+    bed_file = argv[2]
+    output_file = argv[3]
+    annotate_aserTable_from_bed(aserTable, bed_file, output_file)
+
+
+def annotate_aserTable_from_bed(aserTable, bed_file, output_table):
+    # the first column is the id. The rest are the values.
     bedidx = create_bed_index(bed_file)
 
-    with open(file, 'r') as fd:
+    with open(aserTable, 'r') as fd, open(output_table, 'w') as out:
         for idx, line in enumerate(fd):
-            if line[0] == '#':
+            tks = line.rstrip('\n').split('\t')
+            chr, pos, id, ref, alt = tks[0].split("_")
+            snp_internal_id_expand = '\t'.join([chr, pos, id, ref, alt])
+            values = '\t'.join(tks[1:])
+
+            if (idx == 0):
+                out.write(snp_internal_id_expand + '\t' + "symbol" + '\t' + values + '\n')
                 continue
-
-            if from_vcf:
-                chr, pos, id, ref, alt, *infos= line.rstrip('\n').split('\t')
-            else:
-                tks = line.rstrip('\n').split('\t')
-                chr, pos, id, ref, alt = tks[0].split("_")
-
-            snp_internal_id = '_'.join([chr, pos, id, ref, alt])
 
             if chr in bedidx:
                 for start, stop, gene, _strand in bedidx[chr]:
                     if start <= pos and stop >= pos:
-
-                        print(snp_internal_id + '\t' + gene)
+                        out.write(snp_internal_id_expand + '\t' + gene + '\t' + values + '\n')
 
 
 def create_bed_index(bed_file):
@@ -101,4 +108,4 @@ def read_line(fd):
         yield key, info
 
 if __name__ == '__main__':
-    snp2gene()
+    annotate_aserTable_from_bed()

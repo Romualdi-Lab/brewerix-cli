@@ -55,7 +55,8 @@ def align_genome_single_end(fq, threads, index_dir_prefix, thread_sam='1'):
                '--rg', "PU:S_" + sample,
                '--rg', "SM:" + sample,
                '-x', index_dir_prefix,
-               '-U', fq, sam.name]
+               '-U', fq,
+               '-S', sam.name]
         print(' '.join(cmd))
         call(cmd)
 
@@ -81,7 +82,8 @@ def align_genome_paired_end(fq1, fq2, threads, index_dir_prefix, thread_sam='1')
                '--rg', "SM:" + sample,
                '-x', index_dir_prefix,
                '-1', fq1,
-               '-2', fq2, sam.name]
+               '-2', fq2,
+               '-S', sam.name]
         print(' '.join(cmd))
         call(cmd)
 

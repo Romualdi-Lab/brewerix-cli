@@ -6,7 +6,7 @@ def format_ase():
         format_ase_internal(fd, intermediate=stdout)
 
 
-def format_ase_internal(fd, intermediate):
+def format_ase_internal(fd, intermediate, min_coverage=5):
     for idx, line in enumerate(fd):
         tokens = line.rstrip('\n').split('\t')
         if len(tokens) < 7:
@@ -15,8 +15,13 @@ def format_ase_internal(fd, intermediate):
         id = '_'.join(tokens[:5])
         ref = tokens[5]
         alt = tokens[6]
-        ref_alt = ','.join([ref, alt])
-        intermediate.write(id + '\t' + ref_alt + '\n')
+        if idx == 0:
+            ref_alt = ','.join([ref, alt])
+            intermediate.write(id + '\t' + ref_alt + '\n')
+        else:
+            if int(ref) + int(alt) >= min_coverage:
+                ref_alt = ','.join([ref, alt])
+                intermediate.write(id + '\t' + ref_alt + '\n')
 
 
 if __name__ == '__main__':

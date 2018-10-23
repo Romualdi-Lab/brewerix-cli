@@ -1,4 +1,4 @@
-from subprocess import call, PIPE
+from subprocess import call, PIPE, check_output
 from tempfile import NamedTemporaryFile
 
 from re import search
@@ -30,9 +30,9 @@ def samtools_index(input):
 
 
 def check_rg_tag(input):
-    fd = call(["samtools", "view", "-H", input], stdout=PIPE)
-    for line in fd:
-        if search(r'^@RG', line):
+    out = check_output(["samtools", "view", "-H", input], universal_newlines=True)
+    for line in out.split("\n"):
+        if not search(r'^@RG', line):
             break
         return True
 

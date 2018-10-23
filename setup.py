@@ -17,9 +17,9 @@ setup(
     packages=find_packages(),
     entry_points={
         'console_scripts': [
-            'guess_loi=workflow.guess_loi.guess_loi:guess_loi_from_bams',
+            'guess_loi=workflow.guess_loi.guess_loi:guess_loi_from_fqs',
             'format_ase=workflow.guess_loi.format_ase:format_ase',
-            'snp2gene=workflow.guess_loi.snp_gene_association:snp2gene',
+            'annotate=workflow.guess_loi.snp_gene_association:annotate',
             'compact-snp=workflow.guess_loi.filter_count_compress_output:compact_snps',
             'hisat2-buildIndex=workflow.guess_loi.hisat_build_index:hisat_build_index',
             'run-hisat2=workflow.guess_loi.hisat2_align:run_hisat2',
