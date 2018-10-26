@@ -2,7 +2,8 @@ from collections import namedtuple
 from subprocess import check_call
 from typing import Tuple, Iterable, Dict, List, NewType
 
-from workflow.guess_loi.filter_count_compress_output import compact_snps_core
+from workflow.guess_loi.filter_count_compress_output import reduce_snp_redundancies, \
+    write_guess_loi_table, sort_by_columns
 
 Entry = namedtuple('Entry', 'gene_id, ref, alt, lineno')
 
@@ -94,9 +95,9 @@ def write_ase(ase: Ase, samples: List[Sample], output: str) -> None:
             fd.write('%s\t%s\n' % (key, value))
 
 
-def get_ase_table(file="ASER_table.txt", gene_col=5, out_file_name="final-output-table.txt"):
-    with open(file, 'r') as tbl:
-        compact_snps_core(tbl, gene_col, out_file_name)
+def create_guess_loi_table(lines: List, head: List, gene_col: int=5, output: str= "final-output-table.txt"):
+    reduced_snps = sort_by_columns(reduce_snp_redundancies(lines, gene_col), [0, 1])
+    write_guess_loi_table(reduced_snps, head, output)
 
 
 def create_keys_dictionaries(files):

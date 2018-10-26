@@ -1,91 +1,76 @@
+from collections import namedtuple
 from itertools import groupby
 from operator import itemgetter
-from sys import argv
+from typing import Tuple, List, Iterator
+
+GeneSnpSummary = namedtuple('GeneSnpSummary', 'snps, gene')
 
 
-def compact_snps():
-    table = argv[1]
-    gene_col = int(argv[2])
-    with open(table, 'r') as fd:
-        compact_snps_core(fd, gene_col, "/dev/stdout")
+def reduce_snp_redundancies(snp_lines: Iterator, gene_col: int) -> List:
+    for key, values in groupby(snp_lines, itemgetter(gene_col)):
+        # TODO: use the iterator rather than the list?
+        values = list(values)
+        interesting_snps, overall_gene = extract_informative_snps(values, gene_col, 0.1)
+
+        if len(interesting_snps) == 0:
+            first_line_gene_annotation = values[0][:gene_col + 1]
+            yield collapse_to_gene_info(first_line_gene_annotation, overall_gene)
+        else:
+            yield from interesting_snps
 
 
-def compact_snps_core(fd, gene_col=5, out_file_name="final-output-table.txt"):
-    with open(out_file_name, "w") as out:
-        first_line = True
+def extract_informative_snps(values: List, gene_col: int, ratio_min: float = 0.1) -> Tuple:
+    interesting_snps = []
+    overall_gene_expression = []
 
-        for key, values in groupby(iter_snp(fd, gene_col), itemgetter(gene_col)):
+    for line in values:
+        allelic_expressions = line[(gene_col + 1):]
+        a_ratio = [ratio_allele_expression(x) for x in allelic_expressions]
+        a_sum = [sum_allele_expression(x) for x in allelic_expressions]
+        overall_gene_expression.append(a_sum)
 
-            # TODO: use the iterator rather than the list?
-            values = list(values)
+        for r in a_ratio:
+            if r >= ratio_min:
+                interesting_snps.append(line)
+                break
+    overall_gene = [sum(x) for x in zip(*overall_gene_expression)]
 
-            if first_line:
-                out.write('\t'.join(values[0]) + '\n')
-                first_line = False
-                continue
-
-            interesting_snp = []
-            overall_gene_expression = []
-
-            for line in values:
-                allelic_expressions = line[(gene_col + 1):]
-                a_ratio = [ratio_allele_expression(x) for x in allelic_expressions]
-                a_sum = [sum_allele_expression(x) for x in allelic_expressions]
-                overall_gene_expression.append(a_sum)
-
-                for r in a_ratio:
-                    if r >= 0.1:
-                        interesting_snp.append(line)
-                        break
-
-            overall_gene = [sum(x) for x in zip(*overall_gene_expression)]
-
-            if len(interesting_snp) == 0:
-                line = values[0]
-                ref_alt_fake = zip(overall_gene, [0 for _ in range(len(overall_gene))])
-                overall_gene = [','.join([str(v) for v in x]) for x in ref_alt_fake]
-                annot = line[:(gene_col + 1)]
-                annot[2] = "rs_multi"
-                output = annot + overall_gene
-
-                # print('\t'.join(output)) # TODO change this to save on file
-                out.write('\t'.join(output) + '\n')
-            else:
-                for line in interesting_snp:
-                    # print('\t'.join(line))
-                    out.write('\t'.join(line) + '\n')
+    return interesting_snps, overall_gene
 
 
-def sort_file_by_gene_name(in_file, out_file):
-    with open(in_file, "r") as fd, open(out_file, "w") as out:
-        d = {}
-        for idx, line in enumerate(fd):
-            if idx == 0:
-                out.write(line)
-                continue
-
-            tks = line.split('\t')
-            key = tks[5]
-
-            if key in d:
-                d[key].append(tks)
-            else:
-                d[key] = [tks]
-
-        for k in sorted(d.keys()):
-            d[k] = sorted(d[k], key=lambda x: int(x[1]))
-            lines = ['\t'.join(l) for l in d[k]]
-            out_str = ''.join(lines)
-            out.write(out_str)
+def collapse_to_gene_info(gene_annotation: List, overall_gene_expression: List, snp_id_text: str="rs_multi") -> List:
+    gene_annotation[2] = snp_id_text
+    ref_alt_fake = zip(overall_gene_expression, [0 for _ in range(len(overall_gene_expression))])
+    overall_gene_expression = [','.join([str(v) for v in x]) for x in ref_alt_fake]
+    return gene_annotation + overall_gene_expression
 
 
-def iter_snp(fd, gene_col):
-    # TODO: control if input is sorted
-    for line_idx, line in enumerate(fd):
-        tokens = line.rstrip('\n').split('\t')
-        if len(tokens) <= gene_col:
-            exit('Insufficient token number at line %d: %s' % (line_idx + 1, line))
-        yield tokens
+def sort_file_by_gene_name_and_position(lines) -> Tuple[str, list]:
+    # header, lines = read_annoted_ase(in_file)
+    header = next(lines)
+    return header, sort_by_columns(lines, [5, 1])
+
+
+def read_annoted_ase(in_file: str) -> Tuple[str, List]:
+    lines = []
+    with open(in_file, "rt") as fd:
+        header = next(fd)
+
+        for idx, line in enumerate(fd, 2):
+            tks = line.rstrip('\n').split('\t')
+            lines.append(tks)
+        return header, lines
+
+
+def sort_by_columns(lines: List, columns: List) -> List:
+    yield from sorted(lines, key=itemgetter(*columns))
+
+
+def write_guess_loi_table(lines: Iterator[List], header: List, filename: str) -> None:
+    with open(filename, 'wt') as out:
+        out.write('\t'.join(header) + '\n')
+        for line in lines:
+            out.write('\t'.join(line) + '\n')
 
 
 def sum_allele_expression(ae):
@@ -103,7 +88,3 @@ def ratio_allele_expression(ae):
     aes = ae.split(',')
     aes = [int(x) for x in aes]
     return min(aes) / float(sum(aes))
-
-
-if __name__ == '__main__':
-    compact_snps()

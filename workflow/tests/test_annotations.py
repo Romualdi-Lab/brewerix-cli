@@ -47,15 +47,21 @@ def test_fail_read_ase_table_malformed_id():
 
 
 def test_annotate_aser_simple():
+    infos_head = ['chr', 'pos', 'rs', 'ref', 'alt']
+    values_head = ['sample1', 'sample2']
+    
+    infos = ['1', '20', 'rs123', 'A', 'T']
+    values = ['r1/a1', 'r2/a2']
+    
     lines = [
-        [0, 'chr', 'pos', 'chr\tpos\trs\tref\talt', 'sample1\tsample2'],
-        [1, '1', '20', '1\t20\trs123\tA\tT', 'r1/a1\tr2/a2'],
+        [0, 'chr', 'pos', infos_head, values_head],
+        [1, '1', '20', infos, values],
     ]
     bed_idx = {'1': [[5, 300, "Gene_a", '+']]}
 
     annotated = [
-        'chr\tpos\trs\tref\talt\tsymbol\tsample1\tsample2',
-        '1\t20\trs123\tA\tT\tGene_a\tr1/a1\tr2/a2'
+        infos_head + ['symbol'] + values_head,
+        infos + ['Gene_a'] + values,
     ]
 
     assert list(annotate_aser(lines, bed_idx)) == annotated

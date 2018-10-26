@@ -19,7 +19,6 @@ setup(
         'console_scripts': [
             'guess_loi=workflow.guess_loi.guess_loi:guess_loi_from_fqs',
             'annotate=workflow.guess_loi.snp_gene_association:annotate',
-            'compact-snp=workflow.guess_loi.filter_count_compress_output:compact_snps',
             'hisat2-buildIndex=workflow.guess_loi.hisat_build_index:hisat_build_index',
             'run-hisat2=workflow.guess_loi.hisat2_align:run_hisat2',
         ],

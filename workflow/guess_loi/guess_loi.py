@@ -2,10 +2,10 @@ from collections import Counter
 from os.path import basename, exists
 from sys import argv
 
-from workflow.guess_loi.ase import get_ase_table, ase_table
+from workflow.guess_loi.ase import create_guess_loi_table, ase_table
 from workflow.guess_loi.checks import check_gatk, check_file_exists
 from workflow.guess_loi.common_utility import guess_sample_name, check_paired_end_nomenclature
-from workflow.guess_loi.filter_count_compress_output import sort_file_by_gene_name
+from workflow.guess_loi.filter_count_compress_output import sort_file_by_gene_name_and_position
 from workflow.guess_loi.hisat2_align import align_genome_paired_end, align_genome_single_end
 from workflow.guess_loi.samtools_wrappers import samtools_filter, check_rg_tag
 from workflow.guess_loi.snp_gene_association import annotate_aser_table_from_bed
@@ -79,10 +79,9 @@ def guess_loi_from_fqs():
 
 def create_ase_table_from_bams(snps, bams, bed, gatk, genome, samples):
     table = ase_table(gatk, bams, snps, genome, samples)
-
-    annotate_aser_table_from_bed(table, bed, "LOI-table.txt")
-    sort_file_by_gene_name("LOI-table.txt", "LOI-table-sort.txt")
-    get_ase_table("LOI-table-sort.txt")
+    annotated_lines = annotate_aser_table_from_bed(table, bed)
+    head, lines = sort_file_by_gene_name_and_position(annotated_lines)
+    create_guess_loi_table(lines, head, 5, "guess_loi_table.txt")
 
 
 def check_sample_paired_end(samples):
@@ -92,15 +91,6 @@ def check_sample_paired_end(samples):
             print("a sample does not have hsi pair: " + sample)
             exit(278)
     return samples_counts.keys()
-
-
-# def aser_count(gatk, bams, snps, genome, samples):
-#     # run aser count
-#     # format the results
-#     # annotate with bed file
-#     # create allele count info (compress the output)
-#     for bam, sample in zip(bams, samples):
-#         run_aser_on_bam(gatk, bam, snps, genome, sample)
 
 
 if __name__ == '__main__':

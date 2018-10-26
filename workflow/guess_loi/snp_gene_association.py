@@ -2,7 +2,7 @@ import re
 from itertools import groupby
 from operator import itemgetter
 from sys import argv
-from typing import Dict, List, TextIO, Iterable
+from typing import Dict, List, TextIO, Iterable, Iterator
 
 
 class AnnotationError(Exception):
@@ -59,17 +59,17 @@ def snp2gene_association_from_bed(vcf_file, bed_file):
 def annotate():
     aser_table = argv[1]
     bed_file = argv[2]
-    output_file = argv[3]
-    annotate_aser_table_from_bed(aser_table, bed_file, output_file)
+    annotate_aser_table_from_bed(aser_table, bed_file)
 
 
-def annotate_aser_table_from_bed(aser_table_file: str, bed_file: str, output: str) -> None:
+def annotate_aser_table_from_bed(aser_table_file: str, bed_file: str) -> Iterator:
     # the first column is the id. The rest are the values.
     bed_idx = read_bed_index(bed_file)
     # TODO: remove pseudoautosomal region
     read_lines = read_ase_table(aser_table_file)
     annotated_lines = annotate_aser(read_lines, bed_idx)
-    write_annotated_aser_table(annotated_lines, output)
+    return annotated_lines
+    # write_annotated_aser_table(annotated_lines, output)
 
 
 def read_bed_index(bed_file: str) -> Dict:
@@ -102,28 +102,30 @@ def read_line_bed(fd: TextIO) -> Iterable[List]:
 def read_ase_table(filename: str) -> Iterable[List]:
     with open(filename, 'r') as fd:
         length_t = None
-        for lineno, line in enumerate(fd, 1):
+        for lineno, line in enumerate(fd):
             tks = line.rstrip('\n').split('\t')
+            l_err = lineno + 1
             if length_t is not None and length_t != len(tks):
-                raise AnnotationError("malformed input: incorrect number of columns at line %s" % lineno)
+                raise AnnotationError("malformed input: incorrect number of columns at line %d" % l_err)
             length_t = len(tks)
             infos = tks[0].split("_")
 
             if len(infos) < 5:
-                raise AnnotationError("malformed input: id must be format as %r" % 'chr_pos_rs_ref_alt')
+                raise AnnotationError("malformed input: id must be format as %r at line %d" %
+                                      ('chr_pos_rs_ref_alt', l_err))
 
-            yield lineno, infos[0], infos[1], '\t'.join(infos), '\t'.join(tks[1:])
+            yield lineno, infos[0], infos[1], infos, tks[1:]
 
 
-def annotate_aser(lines: Iterable[List], bed_idx: Dict) -> str:
+def annotate_aser(lines: Iterable[List], bed_idx: Dict) -> List:
     for lineno, chrom, pos, infos, values in lines:
         if lineno == 0:
-            yield infos + '\t' + "symbol" + '\t' + values
+            yield infos + ["symbol"] + values
 
         if chrom in bed_idx:
             for start, stop, gene, _strand in bed_idx[chrom]:
                 if int(start) <= int(pos) <= int(stop):
-                    yield infos + '\t' + gene + '\t' + values
+                    yield infos + [gene] + values
 
 
 def write_annotated_aser_table(lines: Iterable[str], filename):
