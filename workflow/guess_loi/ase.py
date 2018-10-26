@@ -1,18 +1,29 @@
-from collections import OrderedDict
+from collections import namedtuple
 from subprocess import check_call
+from typing import Tuple, Iterable, Dict, List, NewType
 
 from workflow.guess_loi.filter_count_compress_output import compact_snps_core
 
+Entry = namedtuple('Entry', 'gene_id, ref, alt, lineno')
 
-def ase_table(gatk, bams, snps, genome, samples):
-    ase_tables = OrderedDict([(sample, aser_count(gatk, bam, snps, genome, sample))
-                              for bam, sample in zip(bams, samples)])
-    return collapse_ase(ase_tables)
+AseKey = NewType('AseKey', str)
+
+Ase = Dict[AseKey, str]
+
+Sample = NewType('Sample', str)
+
+
+class AseError(Exception):
+    pass
+
+
+def ase_table(gatk, bams, snps, genome, samples: List[Sample]) -> None:
+    ases = [aser_count(gatk, bam, snps, genome, sample) for bam, sample in zip(bams, samples)]
+    write_ase(merge_ase(ases), samples, "ASER_table.txt")
 
 
 def aser_count(gatk, bam, vcf, genome, sample):
     step1 = sample + ".ASER.txt"
-    step2 = sample + ".aser"
 
     check_call([
         gatk, "ASEReadCounter",
@@ -21,44 +32,64 @@ def aser_count(gatk, bam, vcf, genome, sample):
         "-R", genome,
         "-O", step1,
     ])
-    format_ase(step1, step2)
 
-    return step2
-
-
-def format_ase(input_, output):
-    with open(input_, 'rt') as i, open(output, "wt") as o:
-        format_ase_internal(i, o)
+    return read_ase(step1)
 
 
-def format_ase_internal(fd, intermediate, min_coverage=5):
-    for idx, line in enumerate(fd):
-        tokens = line.rstrip('\n').split('\t')
-        if len(tokens) < 7:
-            print("less than 7 tokens at line " + str(idx + 1))
-
-        gene_id = '_'.join(tokens[:5])
-        ref = tokens[5]
-        alt = tokens[6]
-        if idx == 0:
-            ref_alt = ','.join([ref, alt])
-            intermediate.write(gene_id + '\t' + ref_alt + '\n')
-        else:
-            if int(ref) + int(alt) >= min_coverage:
-                ref_alt = ','.join([ref, alt])
-                intermediate.write(gene_id + '\t' + ref_alt + '\n')
+def read_ase(input_: str, min_coverage: int = 5) -> Ase:
+    entries = read_gatk_ase(input_)
+    return dict(format_ase(entries, min_coverage, input_))
 
 
-def collapse_ase(tables):
-    output = "ASER_table.txt"
+def read_gatk_ase(input_: str) -> Iterable[Entry]:
+    with open(input_, 'rt') as fd:
+        line = next(fd)
+        if not line.startswith('contig'):
+            raise AseError('missing header in file %r' % input_)
 
-    all_dictionaries, all_keys = create_keys_dictionaris(tables.values())
-    with open(output, 'wt') as tbl:
-        header = "chr_pos_rs_ref_alt\t" + '\t'.join(tables.keys())
-        tbl.write(header + '\n')
-        collapse(all_dictionaries, all_keys, tbl)
+        for lineno, line in enumerate(fd, 2):
+            tokens = line.rstrip('\n').split('\t')
+            if len(tokens) < 7:
+                raise AseError("less than 7 tokens at line %d in file %r" % (lineno, input_))
 
-    return output
+            yield Entry('_'.join(tokens[:5]), tokens[5], tokens[6], lineno)
+
+
+def format_ase(entries: Iterable[Entry], min_coverage: int, filename: str) -> Iterable[Tuple[AseKey, str]]:
+    for entry in entries:
+        try:
+            ref_i = int(entry.ref)
+            alt_i = int(entry.alt)
+        except ValueError:
+            raise AseError('invalid ref/alt at line %d in file %r' % (-1, filename))
+
+        if ref_i + alt_i >= min_coverage:
+            ref_alt = entry.ref + ',' + entry.alt
+            yield entry.gene_id, ref_alt
+
+
+def merge_ase(ases: List[Ase]) -> Ase:
+    all_keys = merge_keys(ases)
+    return gather_values(all_keys, ases)
+
+
+def merge_keys(ases: List[Ase]) -> List[AseKey]:
+    keys = set()
+    for ase in ases:
+        keys |= set(ase.keys())
+    return sorted(keys)
+
+
+def gather_values(all_keys: List[AseKey], ases: List[Ase]) -> Ase:
+    return {key: '\t'.join([ase.get(key, "NA") for ase in ases]) for key in all_keys}
+
+
+def write_ase(ase: Ase, samples: List[Sample], output: str) -> None:
+    with open(output, 'wt') as fd:
+        fd.write("chr_pos_rs_ref_alt\t" + '\t'.join(samples) + '\n')
+
+        for key, value in ase.items():
+            fd.write('%s\t%s\n' % (key, value))
 
 
 def get_ase_table(file="ASER_table.txt", gene_col=5, out_file_name="final-output-table.txt"):
@@ -66,7 +97,7 @@ def get_ase_table(file="ASER_table.txt", gene_col=5, out_file_name="final-output
         compact_snps_core(tbl, gene_col, out_file_name)
 
 
-def create_keys_dictionaris(files):
+def create_keys_dictionaries(files):
     all_dictionaries = []
     all_keys = set()
     for file_ in files:
