@@ -17,9 +17,11 @@ class AseError(Exception):
     pass
 
 
-def ase_table(gatk, bams, snps, genome, samples: List[Sample]) -> None:
+def ase_table(gatk, bams, snps, genome, samples: List[Sample]) -> str:
+    output = "ASER_table.txt"
     ases = [aser_count(gatk, bam, snps, genome, sample) for bam, sample in zip(bams, samples)]
-    write_ase(merge_ase(ases), samples, "ASER_table.txt")
+    write_ase(merge_ase(ases), samples, output)
+    return output
 
 
 def aser_count(gatk, bam, vcf, genome, sample):
