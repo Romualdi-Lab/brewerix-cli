@@ -45,7 +45,7 @@ def collapse_to_gene_info(gene_annotation: List, overall_gene_expression: List, 
     return gene_annotation + overall_gene_expression
 
 
-def sort_file_by_gene_name_and_position(lines) -> Tuple[str, list]:
+def sort_file_by_gene_name_and_position(lines) -> Tuple[List, list]:
     # header, lines = read_annoted_ase(in_file)
     header = next(lines)
     return header, sort_by_columns(lines, [5, 1])
