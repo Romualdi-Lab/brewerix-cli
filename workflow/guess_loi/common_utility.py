@@ -3,8 +3,8 @@ from re import sub, search
 
 def guess_sample_name(fq, paired=False):
     if paired:
-        return sub(r'_1\.fq(\.gz)*$', '', fq)
-    return sub(r'\.fq(\.gz)*$', '', fq)
+        return sub(r'_[12]\.f(ast)?q(\.gz)?$', '', fq)
+    return sub(r'\.f(ast)?q(\.gz)?$', '', fq)
 
 
 def guess_sample_name_from_bam(bams):

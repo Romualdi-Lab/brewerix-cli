@@ -86,7 +86,7 @@ def check_sample_paired_end(samples):
     samples_counts = Counter(samples)
     for sample in samples_counts:
         if samples_counts[sample] != 2:
-            raise InputError("a sample does not have its pair: %r", sample)
+            raise InputError("a sample does not have its pair: %r" % sample)
     return samples_counts.keys()
 
 
