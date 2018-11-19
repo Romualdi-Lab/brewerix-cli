@@ -1,4 +1,5 @@
 from collections import namedtuple
+from os.path import exists
 from subprocess import check_call
 from typing import Tuple, Iterable, Dict, List, NewType
 
@@ -20,8 +21,9 @@ class AseError(Exception):
 
 def ase_table(gatk, bams, snps, genome, samples: List[Sample]) -> str:
     output = "ASER_table.txt"
-    ases = [aser_count(gatk, bam, snps, genome, sample) for bam, sample in zip(bams, samples)]
-    write_ase(merge_ase(ases), samples, output)
+    if not exists("do_not_run_ASER"):
+        ases = [aser_count(gatk, bam, snps, genome, sample) for bam, sample in zip(bams, samples)]
+        write_ase(merge_ase(ases), samples, output)
     return output
 
 

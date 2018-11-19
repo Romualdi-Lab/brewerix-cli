@@ -110,7 +110,7 @@ def read_ase_table(filename: str) -> Iterable[List]:
             length_t = len(tks)
             infos = tks[0].split("_")
 
-            if len(infos) < 5:
+            if len(infos) != 5:
                 raise AnnotationError("malformed input: id must be format as %r at line %d" %
                                       ('chr_pos_rs_ref_alt', l_err))
 
