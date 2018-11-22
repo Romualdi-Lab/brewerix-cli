@@ -21,6 +21,17 @@ def check_gatk(gatk='~/local/bin/gatk'):
     return gatk
 
 
+def check_bcftools(bcftools='/usr/bin/bcftools'):
+    try:
+        call([bcftools, "-h"],
+             stdin=DEVNULL, stdout=DEVNULL, stderr=DEVNULL)
+    except FileNotFoundError:
+        print("check if bcftools are installed.")
+        exit(134)
+
+    return bcftools
+
+
 def check_hisat2_installation():
     out = check_output(["hisat2", "--version"], universal_newlines=True, stderr=STDOUT)
     if out.find("hisat2: command not found") > 0:
