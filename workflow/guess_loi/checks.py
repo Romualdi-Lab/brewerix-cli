@@ -1,5 +1,5 @@
 from os.path import exists, expanduser
-from subprocess import call, DEVNULL, check_output, STDOUT
+from subprocess import DEVNULL, check_output, STDOUT, check_call
 
 
 def check_file_exists(file):
@@ -12,7 +12,7 @@ def check_file_exists(file):
 def check_gatk(gatk='~/local/bin/gatk'):
     try:
         gatk = gatk.replace("~", expanduser("~"))
-        call([gatk, "--list"],
+        check_call([gatk, "--list"],
              stdin=DEVNULL, stdout=DEVNULL, stderr=DEVNULL)
     except FileNotFoundError:
         print("check if gatk is installed.")
@@ -23,7 +23,7 @@ def check_gatk(gatk='~/local/bin/gatk'):
 
 def check_bcftools(bcftools='/usr/bin/bcftools'):
     try:
-        call([bcftools, "-h"],
+        check_call([bcftools, "-h"],
              stdin=DEVNULL, stdout=DEVNULL, stderr=DEVNULL)
     except FileNotFoundError:
         print("check if bcftools are installed.")

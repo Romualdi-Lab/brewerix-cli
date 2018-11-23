@@ -1,4 +1,5 @@
 from collections import Counter
+from math import floor
 from os.path import basename, exists
 
 from workflow.guess_loi.ase import create_guess_loi_table, ase_table
@@ -27,7 +28,7 @@ def guess_loi():
 
 
 def guess_loi_from_bams(args):
-    gatk = check_gatk(gatk="~/local/stow/gatk-4.0.4.0/gatk")
+    gatk = check_gatk(gatk=args.gatk)
 
     for bam in args.bams:
         check_file_exists(bam)
@@ -39,7 +40,10 @@ def guess_loi_from_bams(args):
 
 
 def guess_loi_from_fqs(args):
-    gatk = check_gatk(gatk="~/local/stow/gatk-4.0.4.0/gatk")
+    gatk = check_gatk(gatk=args.gatk)
+    threads = str(args.threads)
+    _thread_sam = compute_sam_threads(args)
+    thread_sam = '4'
 
     samples = []
     if args.is_paired:
@@ -55,9 +59,11 @@ def guess_loi_from_fqs(args):
             spl = basename(sample)
             bam_file = spl + '.bam'
             if not exists(bam_file):
-                align_genome_paired_end(fq1, fq2, '4', args.genome_idx)
-                out_file = spl + '.filter.bam'
-                samtools_filter(out_file, bam_file, args.bed, thread_sam='4')
+                align_genome_paired_end(fq1, fq2, threads, args.genome_idx)
+
+            out_file = spl + '.filter.bam'
+            if not exists(out_file):
+                samtools_filter(out_file, bam_file, args.bed, thread_sam=thread_sam)
 
     else:
         samples = [guess_sample_name(fq) for fq in args.fqs]
@@ -66,16 +72,28 @@ def guess_loi_from_fqs(args):
             spl = basename(sample)
             bam_file = spl + '.bam'
             if not exists(bam_file):
-                align_genome_single_end(fq, '4', args.genome_idx)
-                out_file = spl + '.filter.bam'
-                samtools_filter(out_file, bam_file, args.bed, thread_sam='4')
+                align_genome_single_end(fq, threads, args.genome_idx)
+
+            out_file = spl + '.filter.bam'
+            if not exists(out_file):
+
+                samtools_filter(out_file, bam_file, args.bed, thread_sam=thread_sam)
 
     samples = [basename(s) for s in samples]
     bams = [s + '.filter.bam' for s in samples]
     create_ase_table_from_bams(args.snps, bams, args.bed, gatk, args.genome_dict, samples)
 
 
+def compute_sam_threads(args):
+    if args.threads == 1:
+        thread_sam = 1
+    else:
+        thread_sam = floor(args.threads / 2)
+    return str(thread_sam)
+
+
 def create_ase_table_from_bams(snps, bams, bed, gatk, genome, samples):
+    # TODO: implement the quantification of the expression with htseq
     table = ase_table(gatk, bams, snps, genome, samples)
     annotated_lines = annotate_aser_table_from_bed(table, bed)
     head, lines = sort_file_by_gene_name_and_position(annotated_lines)

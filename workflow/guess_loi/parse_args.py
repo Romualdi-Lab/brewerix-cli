@@ -14,6 +14,10 @@ def parse_args():
     parser_bams.add_argument('bed', help="the bed with the boundaries of the imprinted genes")
     parser_bams.add_argument('genome_dict', help="the genome dict")
     parser_bams.add_argument('bams', nargs='+', help="the genome dict")
+    parser_bams.add_argument('--threads', type=int, default=1,
+                            help="Number of CPUs to use; please note that any CPU use approximately 2G RAM")
+    parser_bams.add_argument('--gatk-path', dest="gatk", default="gatk",
+                             help="the path to gatk executable")
 
     parser_fqs = subparsers.add_parser('fqs', help='stats from fastqs')
 
@@ -24,5 +28,9 @@ def parse_args():
     parser_fqs.add_argument('fqs', nargs='+', help="the fqs")
     parser_fqs.add_argument('-p', '--paired', dest='is_paired', default=False,
                             action='store_true', help="paired end alignment")
+    parser_fqs.add_argument('--threads', type=int, default=1,
+                            help="Number of CPUs to use; please note that any CPU use approximately 2G RAM")
+    parser_fqs.add_argument('--gatk-path', dest="gatk", default="gatk",
+                             help="the path to gatk executable")
 
     return parser.parse_args()
