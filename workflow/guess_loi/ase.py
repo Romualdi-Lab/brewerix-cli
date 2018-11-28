@@ -23,8 +23,8 @@ class AseError(Exception):
 def ase_table(gatk, bams, snps, genome, samples: List[Sample], progress: Progress) -> str:
     output = "ASER_table.txt"
     if not exists("do_not_run_ASER"):
-        progress.step("ASE Read Count")
-        ases = [aser_count(gatk, bam, snps, genome, sample) for bam, sample in progress.track(zip(bams, samples))]
+        ases = [aser_count(gatk, bam, snps, genome, sample)
+                for bam, sample in progress.track("ASE Read Count", zip(bams, samples))]
 
         progress.step("ASE merge")
         write_ase(merge_ase(ases), samples, output)

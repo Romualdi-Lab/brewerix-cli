@@ -51,8 +51,6 @@ def guess_loi_from_fqs(args):
     samples = []
 
     with Progress(args.progress) as p:
-
-        p.step("Alignment")
         if args.is_paired:
             for fq in args.fqs:
                 check_paired_end_nomenclature(fq)
@@ -60,7 +58,7 @@ def guess_loi_from_fqs(args):
 
             samples = check_sample_paired_end(samples)
 
-            for sample in p.track(samples):
+            for sample in p.track('Aligment', samples):
                 fq1 = sample + "_1.fq.gz"
                 fq2 = sample + "_2.fq.gz"
                 spl = basename(sample)
@@ -74,7 +72,7 @@ def guess_loi_from_fqs(args):
 
         else:
             samples = [guess_sample_name(fq) for fq in args.fqs]
-            for sample in p.track(samples):
+            for sample in p.track('Alignment', samples):
                 fq = sample + ".fq.gz"
                 spl = basename(sample)
                 bam_file = spl + '.bam'
@@ -103,7 +101,10 @@ def create_ase_table_from_bams(snps, bams, bed, gatk, genome, samples, progress)
     table = ase_table(gatk, bams, snps, genome, samples, progress)
     annotated_lines = annotate_aser_table_from_bed(table, bed)
     head, lines = sort_file_by_gene_name_and_position(annotated_lines)
+
+    progress.start('Format results')
     create_guess_loi_table(lines, head, 5, "guess_loi_table.txt")
+    progress.complete()
 
 
 def check_sample_paired_end(samples):

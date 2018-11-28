@@ -9,19 +9,27 @@ class Progress:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._out.close()
 
-    def step(self, label):
-        self._out.write("S %s\n" % label)
-
-    def track(self, items):
+    def track(self, label, items):
         items = list(items)
+        if len(items) == 0:
+            return
+
+        self._write('T%s\n' % label)
+
         n = len(items)
         for i, item in enumerate(items):
-            self._out.write('P %d\n' % round(i/n * 100))
+            self._out.write('P%d\n' % round(i/n * 100))
             self._out.flush()
             yield item
 
         self.complete()
 
-    def complete(self):
-        self._out.write('P 100\n')
+    def _write(self, message):
+        self._out.write(message)
         self._out.flush()
+
+    def start(self, label):
+        self._write('U%s\n' % label)
+
+    def complete(self):
+        self._write('P100\n')
