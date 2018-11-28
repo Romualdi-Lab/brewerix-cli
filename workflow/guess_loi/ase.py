@@ -5,6 +5,7 @@ from typing import Tuple, Iterable, Dict, List, NewType
 
 from workflow.guess_loi.filter_count_compress_output import reduce_snp_redundancies, \
     write_guess_loi_table, sort_by_columns
+from workflow.guess_loi.progress import Progress
 
 Entry = namedtuple('Entry', 'gene_id, ref, alt, lineno')
 
@@ -19,11 +20,16 @@ class AseError(Exception):
     pass
 
 
-def ase_table(gatk, bams, snps, genome, samples: List[Sample]) -> str:
+def ase_table(gatk, bams, snps, genome, samples: List[Sample], progress: Progress) -> str:
     output = "ASER_table.txt"
     if not exists("do_not_run_ASER"):
-        ases = [aser_count(gatk, bam, snps, genome, sample) for bam, sample in zip(bams, samples)]
+        progress.step("ASE Read Count")
+        ases = [aser_count(gatk, bam, snps, genome, sample) for bam, sample in progress.track(zip(bams, samples))]
+
+        progress.step("ASE merge")
         write_ase(merge_ase(ases), samples, output)
+        progress.complete()
+
     return output
 
 

@@ -18,6 +18,8 @@ def parse_args():
                             help="Number of CPUs to use; please note that any CPU use approximately 2G RAM")
     parser_bams.add_argument('--gatk-path', dest="gatk", default="gatk",
                              help="the path to gatk executable")
+    parser_bams.add_argument('--write-progress-to', dest="progress",
+                             help="write analysis progress to file")
 
     parser_fqs = subparsers.add_parser('fqs', help='stats from fastqs')
 
@@ -32,5 +34,7 @@ def parse_args():
                             help="Number of CPUs to use; please note that any CPU use approximately 2G RAM")
     parser_fqs.add_argument('--gatk-path', dest="gatk", default="gatk",
                              help="the path to gatk executable")
+    parser_fqs.add_argument('--write-progress-to', dest="progress",
+                             help="write analysis progress to file")
 
     return parser.parse_args()
