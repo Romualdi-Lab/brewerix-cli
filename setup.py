@@ -24,6 +24,7 @@ setup(
             'merge_vcfs=workflow.guess_loi.merge_vcfs:merge_vcfs',
             'concat_vcfs=workflow.guess_loi.concat_vcfs:concat_vcfs',
             'call_and_merge=workflow.guess_loi.add_haplo_callad_from_multiallelic:call_and_merge',
+            'het_genotype=workflow.guess_loi.vcf_related_functions:reformat_vcf_with_het_genotype',
             'annotate=workflow.guess_loi.snp_gene_association:annotate',
             'hisat2-buildIndex=workflow.guess_loi.hisat_build_index:hisat_build_index',
             'run-hisat2=workflow.guess_loi.hisat2_align:run_hisat2',

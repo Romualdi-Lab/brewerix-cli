@@ -1,21 +1,21 @@
-from os.path import basename, join
+import argparse
+from os.path import join
 from subprocess import check_call
-from sys import argv
 from tempfile import TemporaryDirectory
 
 from workflow.guess_loi.checks import check_bcftools
 
 
 def concat_vcfs():
-    if len(argv) == 1 or len(argv) < 2:
-        print("Run like this:")
-        print('%s OUTPUT VCFs\n' % basename(argv[0]))
-        exit(0)
+    parser = argparse.ArgumentParser(description="""
+            Concatenate VCFs
+            """)
+    parser.add_argument('output', help="output file name")
+    parser.add_argument('vcfs', nargs='+', help="vcfs of the SNPs")
 
-    output = argv[1]
-    files = argv[2:]
+    args = parser.parse_args()
 
-    run_concat_vcfs(files, output)
+    run_concat_vcfs(args.vcfs, args.output)
 
 
 def run_concat_vcfs(files, output):
