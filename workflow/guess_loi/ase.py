@@ -26,7 +26,7 @@ def ase_table(gatk, bams, snps, genome, samples: List[Sample], progress: Progres
         ases = [aser_count(gatk, bam, snps, genome, sample)
                 for bam, sample in progress.track("ASE Read Count", zip(bams, samples))]
 
-        progress.step("ASE merge")
+        progress.start("ASE merge")
         write_ase(merge_ase(ases), samples, output)
         progress.complete()
 
