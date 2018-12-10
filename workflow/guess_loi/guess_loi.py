@@ -40,7 +40,6 @@ def guess_loi_from_bams(args):
 
 
 def guess_loi_from_fqs(args):
-    gatk = check_gatk(gatk=args.gatk)
     hisat_threads, samtools_threads = split_threads(args.threads)
 
     samples = (paired_samples if args.is_paired else single_samples)(args.fqs)
@@ -56,7 +55,7 @@ def guess_loi_from_fqs(args):
         for bam in p.track('Index generation', bams):
             call_samtools_index(bam)
 
-        create_ase_table_from_bams(args.snps, bams, args.bed, gatk, args.genome_dict, samples, p)
+        create_ase_table_from_bams(args.snps, bams, args.bed, args.genome_dict, samples, p)
 
 
 def split_threads(threads):
@@ -68,10 +67,10 @@ def split_threads(threads):
         return threads, s
 
 
-def create_ase_table_from_bams(snps, bams, bed, gatk, genome, samples, progress):
+def create_ase_table_from_bams(snps, bams, bed, genome, samples, progress):
     # TODO: implement the quantification of the expression with htseq
     names = [s.name for s in samples]
-    table = ase_table(gatk, bams, snps, genome, names, progress)
+    table = ase_table(bams, snps, genome, names, progress)
     annotated_lines = annotate_aser_table_from_bed(table, bed)
     head, lines = sort_file_by_gene_name_and_position(annotated_lines)
 
