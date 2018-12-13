@@ -3,7 +3,7 @@ from collections import namedtuple, defaultdict
 from os.path import basename
 
 
-Sample = namedtuple('Sample', 'name, fastqs')
+Sample = namedtuple('Sample', 'name, fastqs, bam')
 
 
 def single_samples(fastqs):
@@ -15,7 +15,7 @@ def single_samples(fastqs):
         if m is None:
             exit('invalid filename for single-end reads: ' + fastq)
         else:
-            samples.append(Sample(basename(m.group(1)), [fastq]))
+            samples.append(Sample(basename(m.group(1)), [fastq], None))
 
     return samples
 
@@ -36,6 +36,6 @@ def paired_samples(fastqs):
         if len(files) != 2:
             exit('wrong number of files for group %r: %d' % (name, len(files)))
         else:
-            samples.append(Sample(name, sorted(files)))
+            samples.append(Sample(name, sorted(files), None))
 
     return samples

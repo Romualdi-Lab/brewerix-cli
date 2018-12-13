@@ -3,7 +3,7 @@ from os.path import join
 from subprocess import check_call
 from tempfile import TemporaryDirectory
 
-from workflow.guess_loi.checks import check_bcftools
+from workflow.guess_loi.checks import check_command_availability
 
 
 def concat_vcfs():
@@ -19,7 +19,7 @@ def concat_vcfs():
 
 
 def run_concat_vcfs(files, output):
-    bcftools = check_bcftools("bcftools")
+    check_command_availability(['bcftools'])
 
     with TemporaryDirectory() as wdir:
         gzipped_files = []
@@ -33,7 +33,7 @@ def run_concat_vcfs(files, output):
                 check_call(["tabix", "-p", "vcf", gfile])
 
         cmd = [
-                  bcftools, "merge",
+                  'bcftools', "merge",
                   "-a", "-D",
                   "-O", "v",
                   "-o", output,

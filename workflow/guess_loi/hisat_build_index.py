@@ -1,7 +1,7 @@
-from subprocess import call
+from subprocess import check_call
 from sys import argv
 
-from workflow.guess_loi.checks import check_hisat2_installation
+from workflow.guess_loi.checks import check_command_availability
 
 
 def hisat_build_index():
@@ -11,8 +11,8 @@ def hisat_build_index():
 
 
 def build_index(multi_fasta, prefix="index"):
-    check_hisat2_installation()
-    call(["hisat2-build", multi_fasta, prefix])
+    check_command_availability(['hisat2'])
+    check_call(["hisat2-build", multi_fasta, prefix])
 
 
 if __name__ == '__main__':

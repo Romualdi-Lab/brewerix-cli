@@ -1,5 +1,5 @@
-from os.path import exists, expanduser
-from subprocess import DEVNULL, check_output, STDOUT, check_call
+from os.path import exists
+from shutil import which
 
 
 def check_file_exists(file):
@@ -9,40 +9,7 @@ def check_file_exists(file):
     return True
 
 
-def check_gatk(gatk='~/local/bin/gatk'):
-    try:
-        gatk = gatk.replace("~", expanduser("~"))
-        check_call([gatk, "--list"],
-             stdin=DEVNULL, stdout=DEVNULL, stderr=DEVNULL)
-    except FileNotFoundError:
-        print("check if gatk is installed.")
-        exit(134)
-
-    return gatk
-
-
-def check_bcftools(bcftools='/usr/bin/bcftools'):
-    try:
-        check_call([bcftools, "-h"],
-             stdin=DEVNULL, stdout=DEVNULL, stderr=DEVNULL)
-    except FileNotFoundError:
-        print("check if bcftools are installed.")
-        exit(134)
-
-    return bcftools
-
-
-def check_hisat2_installation():
-    out = check_output(["hisat2", "--version"], universal_newlines=True, stderr=STDOUT)
-    if out.find("hisat2: command not found") > 0:
-            print("error: hisat2 not found")
-            exit(202)
-
-    # with TemporaryFile('w+t') as e:
-    #
-    #     call(["hisat2", "--version"], stderr=e)
-    #     line = e.readline()
-    #
-    #     if line.find("hisat2: command not found") >0:
-    #         print("error: hisat2 not found")
-    #         exit(202)
+def check_command_availability(commands):
+    for cmd in commands:
+        if which(cmd) is None:
+            exit("program not installed: %s" % cmd)

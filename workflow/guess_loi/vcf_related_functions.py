@@ -24,6 +24,6 @@ def annotate_vcf_with_heterozygous_genotype(vcf, vcf_out):
                 if line[:1] == "#":
                     new_line = tokens[:9] + ["meta_sample\n"]  # type: List
                 else:
-                    new_line = tokens[:8] + ["GT", "0/1\n"] # type: List
+                    new_line = tokens[:8] + ["GT", "0/1\n"]  # type: List
 
                 vo.write('\t'.join(new_line))

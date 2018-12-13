@@ -3,8 +3,6 @@ from subprocess import check_call
 from sys import argv
 from tempfile import TemporaryDirectory
 
-from workflow.guess_loi.checks import check_bcftools
-
 
 def merge_vcfs():
     if len(argv) == 1 or len(argv) < 2:
@@ -19,7 +17,6 @@ def merge_vcfs():
 
 
 def run_merge_vcfs(files, output):
-    bcftools = check_bcftools("bcftools")
 
     with TemporaryDirectory() as wdir:
         gzipped_files = []
@@ -33,7 +30,7 @@ def run_merge_vcfs(files, output):
                 check_call(["tabix", "-p", "vcf", gfile])
 
         cmd = [
-                  bcftools, "merge",
+                  'bcftools', "merge",
                   "-m", "none",
                   "-O", "v",
                   "-o", output,

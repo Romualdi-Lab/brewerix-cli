@@ -3,8 +3,6 @@ from subprocess import check_call
 from sys import argv
 from typing import List
 
-from workflow.guess_loi.checks import check_gatk
-
 
 def haplotype_caller():
     if len(argv) == 1 or len(argv) < 5:
@@ -12,26 +10,24 @@ def haplotype_caller():
         print('%s OUTPUT ALLELES_VCF GENOME BAMS...\n' % basename(argv[0]))
         exit(0)
 
-    gatk = "~/local/stow/gatk-4.0.4.0/gatk"
     haplotype_file = argv[1]
     alleles_vcf = argv[2]
     genome = argv[3]
     bams = argv[4:]
 
-    run_haplotype_caller(gatk, alleles_vcf, bams, genome, haplotype_file)
+    run_haplotype_caller(alleles_vcf, bams, genome, haplotype_file)
 
 
-def run_haplotype_caller(gatk: str, alleles_vcf: str, bams: List[str], genome: str, haplotype_file: str):
+def run_haplotype_caller(alleles_vcf: str, bams: List[str], genome: str, haplotype_file: str):
 
     # TODO implement discovery mode
-    gatk = check_gatk(gatk)
 
     bams_input = []
     for bam in bams:
         bams_input += ["-I", bam]
 
     cmd = [
-        gatk, "HaplotypeCaller",
+        'gatk', "HaplotypeCaller",
         "--genotyping-mode", "GENOTYPE_GIVEN_ALLELES",
         "--max-alternate-alleles", "1",
         "-stand-call-conf", "1",

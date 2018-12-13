@@ -15,9 +15,7 @@ def parse_args():
     parser_bams.add_argument('genome_dict', help="the genome dict")
     parser_bams.add_argument('bams', nargs='+', help="the genome dict")
     parser_bams.add_argument('--threads', type=int, default=1,
-                            help="Number of CPUs to use; please note that any CPU use approximately 2G RAM")
-    parser_bams.add_argument('--gatk-path', dest="gatk", default="gatk",
-                             help="the path to gatk executable")
+                             help="Number of CPUs to use; please note that any CPU use approximately 2G RAM")
     parser_bams.add_argument('--write-progress-to', dest="progress",
                              help="write analysis progress to file")
 
@@ -32,9 +30,7 @@ def parse_args():
                             action='store_true', help="paired end alignment")
     parser_fqs.add_argument('--threads', type=int, default=1,
                             help="Number of CPUs to use; please note that any CPU use approximately 2G RAM")
-    parser_fqs.add_argument('--gatk-path', dest="gatk", default="gatk",
-                             help="the path to gatk executable")
     parser_fqs.add_argument('--write-progress-to', dest="progress",
-                             help="write analysis progress to file")
+                            help="write analysis progress to file")
 
     return parser.parse_args()

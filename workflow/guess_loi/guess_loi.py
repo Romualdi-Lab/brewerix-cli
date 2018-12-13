@@ -1,12 +1,13 @@
 from os.path import exists
+from re import sub
 
 from workflow.guess_loi.alignments import align
 from workflow.guess_loi.ase import create_guess_loi_table, ase_table
-from workflow.guess_loi.checks import check_gatk, check_file_exists
+from workflow.guess_loi.checks import check_file_exists, check_command_availability
 from workflow.guess_loi.filter_count_compress_output import sort_file_by_gene_name_and_position
 from workflow.guess_loi.parse_args import parse_args
 from workflow.guess_loi.progress import Progress
-from workflow.guess_loi.samples import paired_samples, single_samples
+from workflow.guess_loi.samples import paired_samples, single_samples, Sample
 from workflow.guess_loi.samtools import check_rg_tag, call_samtools_index
 from workflow.guess_loi.snp_gene_association import annotate_aser_table_from_bed
 
@@ -17,6 +18,8 @@ class InputError(Exception):
 
 def guess_loi():
     args = parse_args()
+    check_command_availability(["gatk", "samtools", "bcftools", "hisat2"])
+
     if args.mode == 'bams':
         guess_loi_from_bams(args)
     elif args.mode == 'fqs':
@@ -26,17 +29,17 @@ def guess_loi():
 
 
 def guess_loi_from_bams(args):
-    raise RuntimeError('broken')
-    gatk = check_gatk(gatk=args.gatk)
+    # raise RuntimeError('broken')
 
+    samples = []
     for bam in args.bams:
         check_file_exists(bam)
         if check_rg_tag(bam):
             raise InputError("error: bam with no RG tag found: %r", bam)
+        samples.append(Sample(sub(r'\.bam$', '', bam), [], bam))
 
-    samples = [guess_sample_name_from_bam(bam) for bam in args.bams]
     with Progress(args.progress) as p:
-        create_ase_table_from_bams(args.snps, args.bams, args.bed, gatk, args.genome_dict, samples, p)
+        create_ase_table_from_bams(args.snps, args.bams, args.bed, args.genome_dict, samples, p)
 
 
 def guess_loi_from_fqs(args):
@@ -59,7 +62,6 @@ def guess_loi_from_fqs(args):
 
 
 def split_threads(threads):
-    # TODO: better heuristic needed
     if threads == 1:
         return 1, 1
     else:
