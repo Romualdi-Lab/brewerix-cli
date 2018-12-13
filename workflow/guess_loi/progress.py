@@ -1,5 +1,10 @@
+from os.path import devnull
+
+
 class Progress:
     def __init__(self, filename):
+        if filename is None:
+            filename = devnull
         self._filename = filename
 
     def __enter__(self):
