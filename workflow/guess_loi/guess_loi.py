@@ -56,7 +56,8 @@ def guess_loi_from_fqs(args):
             bams.append(bam)
 
         for bam in p.track('Index generation', bams):
-            call_samtools_index(bam)
+            if not exists(bam + '.bai'):
+                call_samtools_index(bam)
 
         create_ase_table_from_bams(args.snps, bams, args.bed, args.genome_dict, samples, p)
 
