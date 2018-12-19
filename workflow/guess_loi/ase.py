@@ -29,6 +29,7 @@ def ase_table(bams, snps, genome, samples: List[Sample], progress: Progress) -> 
         progress.start("ASE merge")
         write_ase(merge_ase(ases), samples, output)
         progress.complete()
+        check_call(["touch", "do_not_run_ASER"])
 
     return output
 
@@ -103,8 +104,14 @@ def write_ase(ase: Ase, samples: List[Sample], output: str) -> None:
             fd.write('%s\t%s\n' % (key, value))
 
 
-def create_guess_loi_table(lines: List, head: List, gene_col: int=5, output: str= "final-output-table.txt"):
-    reduced_snps = sort_by_columns(reduce_snp_redundancies(lines, gene_col), [0, 1])
+def compute_binom_test(reduced_snps):
+    # sinle test; x = minor_allele; n = minor + major scipy.stats.binom_test(x, n, p=0.1)
+    pass
+
+
+def create_guess_loi_table(lines: List, head: List, gene_col: int = 5, output: str = "final-output-table.txt"):
+    reduced_snps = sort_by_columns(reduce_snp_redundancies(lines, gene_col), [0, 5, 1])  # sort by chr, gene, position
+    # snps_pvalues = compute_binom_test(reduced_snps)
     write_guess_loi_table(reduced_snps, head, output)
 
 
