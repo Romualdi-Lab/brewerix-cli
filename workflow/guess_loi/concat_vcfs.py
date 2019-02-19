@@ -2,6 +2,7 @@ import argparse
 from os.path import join
 from subprocess import check_call
 from tempfile import TemporaryDirectory
+from typing import List
 
 from workflow.guess_loi.checks import check_command_availability
 
@@ -18,7 +19,7 @@ def concat_vcfs():
     run_concat_vcfs(args.vcfs, args.output)
 
 
-def run_concat_vcfs(files, output):
+def run_concat_vcfs(files: List, output: str):
     check_command_availability(['bcftools'])
 
     with TemporaryDirectory() as wdir:
@@ -30,10 +31,10 @@ def run_concat_vcfs(files, output):
 
             with open(gfile, "wb") as dest:
                 check_call(["bgzip", "-c", file], stdout=dest)
-                check_call(["tabix", "-p", "vcf", gfile])
+            check_call(["tabix", "-p", "vcf", gfile])
 
         cmd = [
-                  'bcftools', "merge",
+                  'bcftools', "concat",
                   "-a", "-D",
                   "-O", "v",
                   "-o", output,
