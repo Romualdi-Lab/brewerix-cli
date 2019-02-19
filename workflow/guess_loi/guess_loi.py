@@ -1,10 +1,14 @@
-from os.path import exists
+from os.path import exists, join
 from re import sub
+from tempfile import TemporaryDirectory
+from typing import List
 
 from workflow.guess_loi.alignments import align
 from workflow.guess_loi.ase import create_guess_loi_table, ase_table
 from workflow.guess_loi.checks import check_file_exists, check_command_availability
+from workflow.guess_loi.concat_vcfs import run_concat_vcfs
 from workflow.guess_loi.filter_count_compress_output import sort_file_by_gene_name_and_position
+from workflow.guess_loi.haplotype_caller_rna import run_haplotype_caller
 from workflow.guess_loi.parse_args import parse_args
 from workflow.guess_loi.progress import Progress
 from workflow.guess_loi.samples import paired_samples, single_samples, Sample
@@ -25,7 +29,7 @@ def guess_loi():
     elif args.mode == 'fqs':
         guess_loi_from_fqs(args)
     else:
-        exit("unrecognized mode: %r "), args.mode
+        exit("unrecognized mode: %r" % args.mode)
 
 
 def guess_loi_from_bams(args):
@@ -39,7 +43,7 @@ def guess_loi_from_bams(args):
         samples.append(Sample(sub(r'\.bam$', '', bam), [], bam))
 
     with Progress(args.progress) as p:
-        create_ase_table_from_bams(args.snps, args.bams, args.bed, args.genome_dict, samples, p)
+        create_ase_table_from_bams(args.snps, args.multi, args.bams, args.bed, args.genome_dict, samples, p)
 
 
 def guess_loi_from_fqs(args):
@@ -59,7 +63,7 @@ def guess_loi_from_fqs(args):
             if not exists(bam + '.bai'):
                 call_samtools_index(bam)
 
-        create_ase_table_from_bams(args.snps, bams, args.bed, args.genome_dict, samples, p)
+        create_ase_table_from_bams(args.snps, args.multi, bams, args.bed, args.genome_dict, samples, p)
 
 
 def split_threads(threads):
@@ -70,16 +74,32 @@ def split_threads(threads):
         return threads, s
 
 
-def create_ase_table_from_bams(snps, bams, bed, genome, samples, progress):
+def create_ase_table_from_bams(snps, multi_snps, bams, bed, genome, samples, progress):
     # TODO: implement the quantification of the expression with htseq
     names = [s.name for s in samples]
-    table = ase_table(bams, snps, genome, names, progress)
+
+    if multi_snps is None:
+        vcf = snps
+    else:
+        vcf = resolve_multi_snps(snps, multi_snps, genome, bams)
+
+    table = ase_table(bams, vcf, genome, names, progress)
     annotated_lines = annotate_aser_table_from_bed(table, bed)
     head, lines = sort_file_by_gene_name_and_position(annotated_lines)
 
     progress.start('Format results')
     create_guess_loi_table(lines, head, 5, "guess_loi_table.txt")
     progress.complete()
+
+
+def resolve_multi_snps(snps: str, multi_snps: str, genome: str, bams: List[str]) -> str:
+    output = "hc-merged.vcf"
+    with TemporaryDirectory() as wdir:
+        called = join(wdir, "called.vcf")
+        run_haplotype_caller(multi_snps, bams, genome, called)
+        run_concat_vcfs([snps, called], output)
+
+    return output
 
 
 if __name__ == '__main__':

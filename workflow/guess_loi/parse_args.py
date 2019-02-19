@@ -10,18 +10,19 @@ def parse_args():
 
     parser_bams = subparsers.add_parser('bams', help='stats from bams')
 
-    parser_bams.add_argument('snps', help="vcfs off the SNPs. Index must me there as well")
+    parser_bams.add_argument('snps', help="vcfs of the SNPs. Index must be there as well")
     parser_bams.add_argument('bed', help="the bed with the boundaries of the imprinted genes")
     parser_bams.add_argument('genome_dict', help="the genome dict")
-    parser_bams.add_argument('bams', nargs='+', help="the genome dict")
+    parser_bams.add_argument('bams', nargs='+', help="the bams")
     parser_bams.add_argument('--threads', type=int, default=1,
                              help="Number of CPUs to use; please note that any CPU use approximately 2G RAM")
     parser_bams.add_argument('--write-progress-to', dest="progress",
                              help="write analysis progress to file")
+    parser_bams.add_argument('--multi', help="the vcf files with multi alleles")
 
     parser_fqs = subparsers.add_parser('fqs', help='stats from fastqs')
 
-    parser_fqs.add_argument('snps', help="vcfs off the SNPs. Index must me there as well")
+    parser_fqs.add_argument('snps', help="vcfs of the SNPs. Index must be there as well")
     parser_fqs.add_argument('bed', help="the bed with the boundaries of the imprinted genes")
     parser_fqs.add_argument('genome_dict', help="the genome dict")
     parser_fqs.add_argument('genome_idx', help="the genome index for hisat2")
@@ -32,5 +33,6 @@ def parse_args():
                             help="Number of CPUs to use; please note that any CPU use approximately 2G RAM")
     parser_fqs.add_argument('--write-progress-to', dest="progress",
                             help="write analysis progress to file")
+    parser_fqs.add_argument('--multi', help="the vcf files with multi alleles")
 
     return parser.parse_args()
