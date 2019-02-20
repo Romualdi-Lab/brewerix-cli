@@ -77,7 +77,7 @@ def sum_allele_expression(ae):
     if ae == "NA":
         return 0
 
-    aes = ae.split(',')
+    aes = ae.split(',')[:2]  # exclude the pvalues
     return sum([int(x) for x in aes])
 
 
@@ -85,6 +85,6 @@ def ratio_allele_expression(ae):
     if ae == 'NA':
         return 0
 
-    aes = ae.split(',')
+    aes = ae.split(',')[:2]  # exclude the pvalues
     aes = [int(x) for x in aes]
     return min(aes) / float(sum(aes))

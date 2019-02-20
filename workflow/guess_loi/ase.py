@@ -3,6 +3,8 @@ from os.path import exists
 from subprocess import check_call
 from typing import Tuple, Iterable, Dict, List, NewType
 
+from scipy.stats import binom_test
+
 from workflow.guess_loi.filter_count_compress_output import reduce_snp_redundancies, \
     write_guess_loi_table, sort_by_columns
 from workflow.guess_loi.progress import Progress
@@ -76,8 +78,17 @@ def format_ase(entries: Iterable[Entry], min_coverage: int, filename: str) -> It
             raise AseError('invalid ref/alt at line %d in file %r' % (-1, filename))
 
         if ref_i + alt_i >= min_coverage:
-            ref_alt = entry.ref + ',' + entry.alt
+            pvalue = binomial_test(ref_i, alt_i)
+            ref_alt = entry.ref + ',' + entry.alt + ',' + str(pvalue)
             yield entry.gene_id, ref_alt
+
+
+def binomial_test(ref, alt):
+    x = alt
+    if (alt > ref):
+        x = ref
+    n = ref + alt
+    return binom_test(x, n, p=0.1, alternative="greater")
 
 
 def merge_ase(ases: List[Ase]) -> Ase:
@@ -106,11 +117,20 @@ def write_ase(ase: Ase, samples: List[Sample], output: str) -> None:
 
 def compute_binom_test(reduced_snps):
     # sinle test; x = minor_allele; n = minor + major scipy.stats.binom_test(x, n, p=0.1)
+    # for lines in reduced_snps:
+    #     anno = lines[:6]
+    #     values = [6:]
+    #     values_pvalue = []
+    #     for v in values:
+    #         if v == "NA":
+    #
+    #     pvalue = binom_test(x, n, p=0.1, alternative="greater")
     pass
 
 
 def create_guess_loi_table(lines: List, head: List, gene_col: int = 5, output: str = "final-output-table.txt"):
     reduced_snps = sort_by_columns(reduce_snp_redundancies(lines, gene_col), [0, 5, 1])  # sort by chr, gene, position
+
     # snps_pvalues = compute_binom_test(reduced_snps)
     write_guess_loi_table(reduced_snps, head, output)
 

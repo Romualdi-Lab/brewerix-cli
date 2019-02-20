@@ -15,6 +15,9 @@ setup(
         """,
     url="https://gitlab.romualdi.bio.unipd.it:workflow/guess_loi.git",
     packages=find_packages(),
+    install_requires = [
+        'scipy',
+    ],
     entry_points={
         'console_scripts': [
             'guess-LOI=workflow.guess_loi.guess_loi:guess_loi',
@@ -28,6 +31,7 @@ setup(
             'annotate=workflow.guess_loi.snp_gene_association:annotate',
             'hisat2-buildIndex=workflow.guess_loi.hisat_build_index:hisat_build_index',
             'run-hisat2=workflow.guess_loi.hisat2_align:run_hisat2',
+            'fake_genotype=workflow.guess_loi.vcf_related_functions:reformat_vcf_with_het_genotype',
         ],
     }
 )
