@@ -13,7 +13,9 @@ from workflow.guess_loi.parse_args import parse_args
 from workflow.guess_loi.progress import Progress
 from workflow.guess_loi.samples import paired_samples, single_samples, Sample
 from workflow.guess_loi.samtools import check_rg_tag, call_samtools_index
+from workflow.guess_loi.select_variants import run_select_variants
 from workflow.guess_loi.snp_gene_association import annotate_aser_table_from_bed
+from workflow.guess_loi.vcf_related_functions import annotate_vcf_with_heterozygous_genotype
 
 
 class InputError(Exception):
@@ -94,10 +96,16 @@ def create_ase_table_from_bams(snps, multi_snps, bams, bed, genome, samples, pro
 
 def resolve_multi_snps(snps: str, multi_snps: str, genome: str, bams: List[str]) -> str:
     output = "hc-merged.vcf"
-    with TemporaryDirectory() as wdir:
-        called = join(wdir, "called.vcf")
-        run_haplotype_caller(multi_snps, bams, genome, called)
-        run_concat_vcfs([snps, called], output)
+
+    if not exists("hc-merged.vcf"):
+        with TemporaryDirectory() as wdir:
+            called = join(wdir, "called.vcf")
+            concatenated = join(wdir, "concatenated.vcf")
+            called_gt = join(wdir, "called_gt.vcf")
+            run_haplotype_caller(multi_snps, bams, genome, called)
+            annotate_vcf_with_heterozygous_genotype(called, called_gt, "gentype")
+            run_concat_vcfs([snps, called_gt], concatenated)
+            run_select_variants(genome, concatenated, ["--select-type-to-exclude", "INDEL"], output)
 
     return output
 
