@@ -83,7 +83,7 @@ def create_ase_table_from_bams(snps, multi_snps, bams, bed, genome, samples, pro
     if multi_snps is None:
         vcf = snps
     else:
-        vcf = resolve_multi_snps(snps, multi_snps, genome, bams)
+        vcf = resolve_multi_snps(snps, multi_snps, genome, bams, progress)
 
     table = ase_table(bams, vcf, genome, names, progress)
     annotated_lines = annotate_aser_table_from_bed(table, bed)
@@ -94,10 +94,11 @@ def create_ase_table_from_bams(snps, multi_snps, bams, bed, genome, samples, pro
     progress.complete()
 
 
-def resolve_multi_snps(snps: str, multi_snps: str, genome: str, bams: List[str]) -> str:
+def resolve_multi_snps(snps: str, multi_snps: str, genome: str, bams: List[str], progress: Progress) -> str:
     output = "hc-merged.vcf"
 
     if not exists("hc-merged.vcf"):
+        progress.start("Resolve multi SNPs")
         with TemporaryDirectory() as wdir:
             called = join(wdir, "called.vcf")
             concatenated = join(wdir, "concatenated.vcf")
@@ -106,6 +107,8 @@ def resolve_multi_snps(snps: str, multi_snps: str, genome: str, bams: List[str])
             annotate_vcf_with_heterozygous_genotype(called, called_gt, "gentype")
             run_concat_vcfs([snps, called_gt], concatenated)
             run_select_variants(genome, concatenated, ["--select-type-to-exclude", "INDEL"], output)
+
+        progress.complete()
 
     return output
 
