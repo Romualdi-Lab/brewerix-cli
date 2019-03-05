@@ -20,7 +20,7 @@ def concat_vcfs():
 
 
 def run_concat_vcfs(files: List, output: str):
-    check_command_availability(['bcftools'])
+    check_command_availability(['bcftools', 'bgzip', 'tabix'])
 
     with TemporaryDirectory() as wdir:
         gzipped_files = []
