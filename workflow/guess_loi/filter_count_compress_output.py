@@ -33,14 +33,23 @@ def extract_informative_snps(values: List, gene_col: int, ratio_min: float = 0.1
             if r >= ratio_min:
                 interesting_snps.append(line)
                 break
-    overall_gene = [sum(x) for x in zip(*overall_gene_expression)]
 
+    overall_gene = [sum(x) for x in zip(*overall_gene_expression)]
     return interesting_snps, overall_gene
 
 
-def collapse_to_gene_info(gene_annotation: List, overall_gene_expression: List, snp_id_text: str="rs_multi") -> List:
+def add_fake_pvalue(l: Iterator, value=1.0):
+    for t in l:
+        yield [v for v in t] + [value]
+
+
+def collapse_to_gene_info(gene_annotation: List, overall_gene_expression: List, snp_id_text: str = "rs_multi",
+                          fake_pvalue: float = 1.0) -> List:
     gene_annotation[2] = snp_id_text
     ref_alt_fake = zip(overall_gene_expression, [0 for _ in range(len(overall_gene_expression))])
+
+    ref_alt_fake = add_fake_pvalue(ref_alt_fake, value=fake_pvalue)
+
     overall_gene_expression = [','.join([str(v) for v in x]) for x in ref_alt_fake]
     return gene_annotation + overall_gene_expression
 
