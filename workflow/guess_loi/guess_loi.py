@@ -5,7 +5,8 @@ from tempfile import TemporaryDirectory
 from typing import List
 
 from workflow.guess_loi.alignments import align
-from workflow.guess_loi.ase import create_guess_loi_table, ase_table
+from workflow.guess_loi.ase import ase_table
+from workflow.guess_loi.table import create_guess_loi_table
 from workflow.guess_loi.checks import check_file_exists, check_command_availability
 from workflow.guess_loi.concat_vcfs import run_concat_vcfs
 from workflow.guess_loi.filter_count_compress_output import sort_file_by_gene_name_and_position

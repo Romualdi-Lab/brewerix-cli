@@ -5,8 +5,6 @@ from typing import Tuple, Iterable, Dict, List, NewType
 
 from scipy.stats import binom_test
 
-from workflow.guess_loi.filter_count_compress_output import reduce_snp_redundancies, \
-    write_guess_loi_table, sort_by_columns
 from workflow.guess_loi.progress import Progress
 
 Entry = namedtuple('Entry', 'gene_id, ref, alt, lineno')
@@ -113,26 +111,6 @@ def write_ase(ase: Ase, samples: List[Sample], output: str) -> None:
 
         for key, value in ase.items():
             fd.write('%s\t%s\n' % (key, value))
-
-
-def compute_binom_test(reduced_snps):
-    # sinle test; x = minor_allele; n = minor + major scipy.stats.binom_test(x, n, p=0.1)
-    # for lines in reduced_snps:
-    #     anno = lines[:6]
-    #     values = [6:]
-    #     values_pvalue = []
-    #     for v in values:
-    #         if v == "NA":
-    #
-    #     pvalue = binom_test(x, n, p=0.1, alternative="greater")
-    pass
-
-
-def create_guess_loi_table(lines: List, head: List, gene_col: int = 5, output: str = "final-output-table.txt"):
-    reduced_snps = sort_by_columns(reduce_snp_redundancies(lines, gene_col), [0, 5, 1])  # sort by chr, gene, position
-
-    # snps_pvalues = compute_binom_test(reduced_snps)
-    write_guess_loi_table(reduced_snps, head, output)
 
 
 def create_keys_dictionaries(files):
