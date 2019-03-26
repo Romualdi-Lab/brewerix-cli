@@ -1,3 +1,4 @@
+import locale
 from os.path import exists, join
 from re import sub
 from tempfile import TemporaryDirectory
@@ -24,6 +25,7 @@ class InputError(Exception):
 
 def guess_loi():
     args = parse_args()
+    setup_locale()
     check_command_availability(["gatk", "samtools", "bcftools", "hisat2"])
 
     if args.mode == 'bams':
@@ -32,6 +34,10 @@ def guess_loi():
         guess_loi_from_fqs(args)
     else:
         exit("unrecognized mode: %r" % args.mode)
+
+
+def setup_locale():
+    locale.setlocale(locale.LC_NUMERIC, 'POSIX')
 
 
 def guess_loi_from_bams(args):

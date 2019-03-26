@@ -1,5 +1,4 @@
 from collections import namedtuple
-from locale import localeconv
 from os.path import exists
 from subprocess import check_call
 from typing import Tuple, Iterable, Dict, List, NewType
@@ -80,21 +79,13 @@ def format_ase(entries: Iterable[Entry], min_coverage: int, filename: str) -> It
 
         if ref_i + alt_i >= min_coverage:
             pvalue = binomial_test(ref_i, alt_i)
-            ref_alt = entry.ref + ',' + entry.alt + ',' + format_pvalue(pvalue)
+            ref_alt = entry.ref + ',' + entry.alt + ',' + str(pvalue)
             yield entry.gene_id, ref_alt
-
-
-def format_pvalue(pvalue : float) -> str:
-    _locale_radix = localeconv()['decimal_point']
-    p = str(pvalue)
-    if _locale_radix != '.':
-        p.replace(_locale_radix, ".")
-    return p
 
 
 def binomial_test(ref, alt):
     x = alt
-    if (alt > ref):
+    if alt > ref:
         x = ref
     n = ref + alt
     return binom_test(x, n, p=1/6, alternative="greater")
