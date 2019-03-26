@@ -1,8 +1,6 @@
-from datetime import datetime
 from os import wait, kill
 from signal import SIGTERM
 from subprocess import Popen, CalledProcessError, PIPE
-from sys import stderr
 
 from workflow.guess_loi.checks import check_file_exists
 from workflow.guess_loi.samtools import samtools_view, samtools_sort
@@ -12,16 +10,10 @@ def align(sample, genome_index, bed, output, hisat_threads, samtools_threads):
     for fastq in sample.fastqs:
         check_file_exists(fastq)
 
-    start_time = datetime.now()
-    try:
-        hisat = hisat2(sample.name, genome_index, sample.fastqs, hisat_threads)
-        view = samtools_view(hisat.stdout, bed)
-        sort = samtools_sort(view.stdout, output, samtools_threads)
-        wait_all('hisat2', [hisat, view, sort])
-
-    finally:
-        end_time = datetime.now()
-        stderr.write('HISAT2 pipeline took: %s\n' % (end_time - start_time,))
+    hisat = hisat2(sample.name, genome_index, sample.fastqs, hisat_threads)
+    view = samtools_view(hisat.stdout, bed)
+    sort = samtools_sort(view.stdout, output, samtools_threads)
+    wait_all('hisat2', [hisat, view, sort])
 
 
 def hisat2(name, genome_index, fastqs, hisat_threads):
