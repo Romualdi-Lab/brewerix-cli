@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="workflow-guess-loi",
-    version="0.4.4",
+    version="0.4.5",
     author="Romualdi's Lab",
     author_email=[
         "paolo.cavei@gmail.com",

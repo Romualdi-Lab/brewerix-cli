@@ -86,6 +86,15 @@ def read_bed(fd: TextIO) -> Dict:
     return {chromosome: [line[1:] for line in grp] for chromosome, grp in groupby(read_line_bed(fd), itemgetter(0))}
 
 
+def create_gene2tss(bed_file: str) -> Dict:
+    with open(bed_file, 'rt') as fd:
+        d = {}
+        for chrm, start, stop, gene, _ in read_line_bed(fd):
+            d[gene] = int(start)
+
+    return d
+
+
 def read_line_bed(fd: TextIO) -> Iterable[List]:
     # TODO: check if bed has 5 tokens
     pre_id = None
