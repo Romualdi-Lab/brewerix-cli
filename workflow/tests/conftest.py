@@ -23,7 +23,7 @@ def hisat2_genome_index():
 @pytest.fixture(scope="session")
 def hisat2_bam():
     with TemporaryDirectory() as wdir:
-        s = Sample('single_trueSeq', [fastq_file], "single_trueSeq.bam")
+        s = Sample('single_trueSeq', [fastq_file], join(wdir, "single_trueSeq.bam"))
         align(s, index, bed, s.bam, 1, 1)
         call_samtools_index(s.bam)
-        yield join(wdir, s.bam)
+        yield s.bam

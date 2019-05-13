@@ -32,7 +32,7 @@ def test_guess_paired_end(hisat2_genome_index):
         check_call(cmd, cwd=wdir)
 
 
-# def test_guess_bam(hisat2_bam):
-#     with TemporaryDirectory() as wdir:
-#         cmd = guess_loi_builder([snps, bed, genome, hisat2_bam], [], mode='bams')
-#         check_call(cmd, cwd=wdir)
+def test_guess_bam(hisat2_bam):
+    with TemporaryDirectory() as wdir:
+        cmd = guess_loi_builder([snps, bed, genome, hisat2_bam], [], mode='bams')
+        check_call(cmd, cwd=wdir)
