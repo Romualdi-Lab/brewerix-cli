@@ -6,17 +6,18 @@ from typing import List
 
 from workflow.guess_loi.alignments import align
 from workflow.guess_loi.ase import ase_table
-from workflow.guess_loi.table import create_guess_loi_table
 from workflow.guess_loi.checks import check_file_exists, check_command_availability
 from workflow.guess_loi.concat_vcfs import run_concat_vcfs
-from workflow.guess_loi.filter_count_compress_output import sort_file_by_gene_name_and_position
+from workflow.guess_loi.filter_count_compress_output import filter_useful_snps, \
+    compute_overall_expression
 from workflow.guess_loi.haplotype_caller_rna import run_haplotype_caller
 from workflow.guess_loi.parse_args import parse_args
 from workflow.guess_loi.progress import Progress
 from workflow.guess_loi.samples import paired_samples, single_samples, Sample
 from workflow.guess_loi.samtools import check_rg_tag, call_samtools_index
 from workflow.guess_loi.select_variants import run_select_variants
-from workflow.guess_loi.snp_gene_association import annotate_aser_table_from_bed
+from workflow.guess_loi.snp_gene_association import annotate_aser_table_from_bed, read_bed_index
+from workflow.guess_loi.table import create_guess_loi_table, collapse_to_gene_info
 from workflow.guess_loi.vcf_related_functions import annotate_vcf_with_heterozygous_genotype
 
 
@@ -72,6 +73,12 @@ def guess_loi_from_fqs(args):
             if not exists(bam + '.bai'):
                 call_samtools_index(bam)
 
+        # if False:
+        #     lp = LineProfiler()
+        #     lp_create_ase_table_from_bams = lp(create_ase_table_from_bams)
+        #     lp_create_ase_table_from_bams(args.snps, args.multi, bams, args.bed, args.genome_dict, samples, p)
+        #     lp.print_stats()
+        # else:
         create_ase_table_from_bams(args.snps, args.multi, bams, args.bed, args.genome_dict, samples, p)
 
 
@@ -81,6 +88,21 @@ def split_threads(threads):
     else:
         s = threads // 2
         return threads, s
+
+
+def create_annotated_lines(informative: list, overall: dict, gene_col: int,
+                           snp_id_text: str = "rs_multi", fake_pvalue: float = 1.0):
+    all_genes_set = set(overall.keys())
+
+    for line in informative:
+        gset = {line[gene_col]}
+        all_genes_set = all_genes_set.difference(gset)
+        line[1] = int(line[1])
+        yield line
+
+    for gene in all_genes_set:
+        annotation = overall[gene][0] + overall[gene][1]
+        yield collapse_to_gene_info(annotation, overall[gene][2], snp_id_text, fake_pvalue)
 
 
 def create_ase_table_from_bams(snps, multi_snps, bams, bed, genome, samples, progress):
@@ -93,11 +115,25 @@ def create_ase_table_from_bams(snps, multi_snps, bams, bed, genome, samples, pro
         vcf = resolve_multi_snps(snps, multi_snps, genome, bams, progress)
 
     table = ase_table(bams, vcf, genome, names, progress)
-    annotated_lines = annotate_aser_table_from_bed(table, bed)
-    head, lines = sort_file_by_gene_name_and_position(annotated_lines)
+
+    bed_idx = read_bed_index(bed)
+
+    snp_lines = annotate_aser_table_from_bed(table, bed_idx)
+    next(snp_lines)
+    informative_snps = filter_useful_snps(snp_lines, gene_col=5, ratio_min=0.1)
+
+    # The iterator need to be re-created
+    snp_lines = annotate_aser_table_from_bed(table, bed_idx)
+    header = next(snp_lines)
+    gene_expression_estimates = compute_overall_expression(snp_lines, gene_col=5)
+
+    annotated_lines = create_annotated_lines(informative_snps, gene_expression_estimates, gene_col=5)
+
+    # TODO: bypass this ordering step.
+    # lines = sort_file_by_gene_name_and_position(annotated_lines)
 
     progress.start('Format results')
-    create_guess_loi_table(lines, head, 5, "guess_loi_table.txt")
+    create_guess_loi_table(annotated_lines, header, "guess_loi_table.txt")
     progress.complete()
 
 

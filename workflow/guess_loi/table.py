@@ -2,22 +2,25 @@ from itertools import groupby
 from operator import itemgetter
 from typing import List, Iterator, Tuple
 
-
 VERSION = 1
 
 
-def create_guess_loi_table(lines: List, head: List, gene_col: int = 5, output: str = "final-output-table.txt"):
-    reduced_snps = sort_by_columns(reduce_snp_redundancies(lines, gene_col), [0, 5, 1])  # sort by chr, gene, position
+# logfile = open("memory-profiler.log", "w+")
 
-    # snps_pvalues = compute_binom_test(reduced_snps)
+
+# @profile(stream=logfile)
+def create_guess_loi_table(lines: Iterator[list], head: List, output: str = "final-output-table.txt"):
+    # reduced_snps = sort_by_columns(reduce_snp_redundancies(lines, gene_col), [0, 5, 1])  # sort by chr, gene, position
+    reduced_snps = sort_by_columns(lines, [0, 5, 1])  # sort by chr, gene, position
     write_guess_loi_table(reduced_snps, head, output)
 
 
-def sort_by_columns(lines: List, columns: List) -> List:
+def sort_by_columns(lines: Iterator[List], columns: List) -> List:
     yield from sorted(lines, key=itemgetter(*columns))
 
 
 def reduce_snp_redundancies(snp_lines: Iterator, gene_col: int) -> List:
+    # DEPRECATED
     for key, values in groupby(snp_lines, itemgetter(gene_col)):
         # TODO: use the iterator rather than the list?
         values = list(values)
@@ -31,6 +34,8 @@ def reduce_snp_redundancies(snp_lines: Iterator, gene_col: int) -> List:
 
 
 def extract_informative_snps(values: List, gene_col: int, ratio_min: float = 0.1) -> Tuple:
+    # DEPRECATED
+
     interesting_snps = []
     overall_gene_expression = []
 
@@ -52,8 +57,9 @@ def extract_informative_snps(values: List, gene_col: int, ratio_min: float = 0.1
 def collapse_to_gene_info(gene_annotation: List, overall_gene_expression: List, snp_id_text: str = "rs_multi",
                           fake_pvalue: float = 1.0) -> List:
     gene_annotation[2] = snp_id_text
-    ref_alt_fake = zip(overall_gene_expression, [0] * len(overall_gene_expression))
+    # gene_annotation = [str(x) for x in gene_annotation]
 
+    ref_alt_fake = zip(overall_gene_expression, [0] * len(overall_gene_expression))
     ref_alt_fake = add_fake_pvalue(ref_alt_fake, value=fake_pvalue)
 
     overall_gene_expression = [','.join([str(v) for v in x]) for x in ref_alt_fake]
@@ -70,7 +76,8 @@ def write_guess_loi_table(lines: Iterator[List], header: List, filename: str) ->
         out.write('# version=%d\n' % VERSION)
         out.write('\t'.join(header) + '\n')
         for line in lines:
-            out.write('\t'.join(line) + '\n')
+            line_str = [str(x) for x in line]
+            out.write('\t'.join(line_str) + '\n')
 
 
 def sum_allele_expression(ae):

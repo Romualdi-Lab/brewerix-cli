@@ -10,6 +10,7 @@ class AnnotationError(Exception):
 
 
 def snp2gene():
+    # Deprecated
     """
     takes 2 argument:
         file (list of ids in 1st column or VCF) with SNPs) argv1
@@ -40,6 +41,7 @@ def snp2gene_association_from_vcf(vcf_file):
 
 
 def snp2gene_association_from_bed(vcf_file, bed_file):
+    # Deprecated
     bedidx = read_bed_index(bed_file)
 
     with open(vcf_file, 'r') as fd:
@@ -59,12 +61,15 @@ def snp2gene_association_from_bed(vcf_file, bed_file):
 def annotate():
     aser_table = argv[1]
     bed_file = argv[2]
-    annotate_aser_table_from_bed(aser_table, bed_file)
 
-
-def annotate_aser_table_from_bed(aser_table_file: str, bed_file: str) -> Iterator:
-    # the first column is the id. The rest are the values.
     bed_idx = read_bed_index(bed_file)
+    annotate_aser_table_from_bed(aser_table, bed_idx)
+
+
+def annotate_aser_table_from_bed(aser_table_file: str, bed_idx: dict) -> Iterator:
+    # the first column is the id. The rest are the values.
+    # bed_idx = read_bed_index(bed_file)
+
     # TODO: remove pseudoautosomal region
     read_lines = read_ase_table(aser_table_file)
     annotated_lines = annotate_aser(read_lines, bed_idx)
