@@ -4,6 +4,8 @@ from re import sub
 from tempfile import TemporaryDirectory
 from typing import List
 
+import pkg_resources
+
 from workflow.guess_loi.alignments import align
 from workflow.guess_loi.ase import ase_table
 from workflow.guess_loi.checks import check_file_exists, check_command_availability
@@ -30,6 +32,9 @@ def guess_loi():
     setup_locale()
     check_command_availability(["gatk", "samtools", "bcftools", "hisat2"])
 
+    version = pkg_resources.require("workflow-guess-loi")[0].version
+
+    print("Workflow guess LOI version: " + version)
     if args.mode == 'bams':
         guess_loi_from_bams(args)
     elif args.mode == 'fqs':

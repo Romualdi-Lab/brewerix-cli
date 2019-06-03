@@ -1,3 +1,4 @@
+import argparse
 import re
 from itertools import groupby
 from operator import itemgetter
@@ -59,11 +60,25 @@ def snp2gene_association_from_bed(vcf_file, bed_file):
 
 
 def annotate():
-    aser_table = argv[1]
-    bed_file = argv[2]
+    parser = argparse.ArgumentParser(description="""
+        Create Annotated Version of ASER.
+        """)
+
+    parser = argparse.ArgumentParser(description="""
+                Concatenate VCFs
+                """)
+    parser.add_argument('aser', help="ASER table file")
+    parser.add_argument('bed', help="bed file")
+
+    args = parser.parse_args()
+
+    aser_table = args.aser
+    bed_file = args.bed
 
     bed_idx = read_bed_index(bed_file)
-    annotate_aser_table_from_bed(aser_table, bed_idx)
+    annotated = annotate_aser_table_from_bed(aser_table, bed_idx)
+    for line in annotated:
+        print('\t'.join(line))
 
 
 def annotate_aser_table_from_bed(aser_table_file: str, bed_idx: dict) -> Iterator:
