@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="workflow-guess-loi",
-    version="0.4.5",
+    version="0.4.6",
     author="Romualdi's Lab",
     author_email=[
         "paolo.cavei@gmail.com",
@@ -17,6 +17,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         'scipy',
+        'htseq',
     ],
     entry_points={
         'console_scripts': [
@@ -32,6 +33,7 @@ setup(
             'hisat2-buildIndex=workflow.guess_loi.hisat_build_index:hisat_build_index',
             'run-hisat2=workflow.guess_loi.hisat2_align:run_hisat2',
             'fake_genotype=workflow.guess_loi.vcf_related_functions:reformat_vcf_with_het_genotype',
+            'quantify=workflow.guess_loi.htseq_quantification:quantify',
         ],
     }
 )
