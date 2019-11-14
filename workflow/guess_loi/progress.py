@@ -14,14 +14,16 @@ class Progress:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._out.close()
 
-    def track(self, label, items):
-        items = list(items)
-        if len(items) == 0:
+    def track(self, label, items, n=None):
+        if n is None:
+            items = list(items)
+            n = len(items)
+
+        if n == 0:
             return
 
         self._write('T%s\n' % label)
 
-        n = len(items)
         for i, item in enumerate(items):
             self._out.write('P%d\n' % round(i/n * 100))
             self._out.flush()

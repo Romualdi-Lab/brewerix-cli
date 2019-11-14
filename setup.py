@@ -16,6 +16,7 @@ setup(
     url="https://gitlab.romualdi.bio.unipd.it:workflow/guess_loi.git",
     packages=find_packages(),
     install_requires=[
+        'intervaltree',
         'scipy',
         'htseq',
     ],

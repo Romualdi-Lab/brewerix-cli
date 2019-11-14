@@ -1,4 +1,5 @@
 from collections import namedtuple
+from multiprocessing import Pool
 from os.path import exists
 from subprocess import check_call
 from typing import Tuple, Iterable, Dict, List, NewType
@@ -20,11 +21,13 @@ class AseError(Exception):
     pass
 
 
-def ase_table(bams, snps, genome, samples: List[Sample], progress: Progress) -> str:
+def ase_table(bams, snps, genome, samples: List[Sample], progress: Progress, threads: int) -> str:
     output = "ASER_table.txt"
     if not exists("do_not_run_ASER"):
-        ases = [aser_count(bam, snps, genome, sample)
-                for bam, sample in progress.track("ASE Read Count", zip(bams, samples))]
+
+        with Pool(threads) as pool:
+            args = ((bam, snps, genome, sample) for bam, sample in zip(bams, samples))
+            ases = list(progress.track("ASE Read Count", pool.imap_unordered(aser_count, args), len(bams)))
 
         progress.start("ASE merge")
         write_ase(merge_ase(ases), samples, output)
@@ -34,7 +37,8 @@ def ase_table(bams, snps, genome, samples: List[Sample], progress: Progress) -> 
     return output
 
 
-def aser_count(bam, vcf, genome, sample):
+def aser_count(args):
+    bam, vcf, genome, sample = args
     step1 = sample + ".ASER.txt"
 
     check_call([

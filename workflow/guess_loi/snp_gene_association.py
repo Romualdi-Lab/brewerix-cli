@@ -5,6 +5,8 @@ from operator import itemgetter
 from sys import argv
 from typing import Dict, List, TextIO, Iterable, Iterator
 
+from intervaltree import IntervalTree
+
 
 class AnnotationError(Exception):
     pass
@@ -61,10 +63,6 @@ def snp2gene_association_from_bed(vcf_file, bed_file):
 
 def annotate():
     parser = argparse.ArgumentParser(description="""
-        Create Annotated Version of ASER.
-        """)
-
-    parser = argparse.ArgumentParser(description="""
                 Concatenate VCFs
                 """)
     parser.add_argument('aser', help="ASER table file")
@@ -86,7 +84,7 @@ def annotate_aser_table_from_bed(aser_table_file: str, bed_idx: dict) -> Iterato
     # bed_idx = read_bed_index(bed_file)
 
     # TODO: remove pseudoautosomal region
-    read_lines = read_ase_table(aser_table_file)
+    read_lines = list(read_ase_table(aser_table_file))
     annotated_lines = annotate_aser(read_lines, bed_idx)
     return annotated_lines
     # write_annotated_aser_table(annotated_lines, output)
@@ -98,7 +96,18 @@ def read_bed_index(bed_file: str) -> Dict:
 
 
 def read_bed(fd: TextIO) -> Dict:
-    return {chromosome: [line[1:] for line in grp] for chromosome, grp in groupby(read_line_bed(fd), itemgetter(0))}
+    chroms = {}
+
+    for chromosome, entries in groupby(read_line_bed(fd), itemgetter(0)):
+        tree = IntervalTree()
+
+        for entry in entries:
+            start, stop, gene = entry[1:4]
+            tree[start:stop] = gene
+
+        chroms[chromosome] = tree
+
+    return chroms
 
 
 def create_gene2tss(bed_file: str) -> Dict:
@@ -123,8 +132,10 @@ def read_line_bed(fd: TextIO) -> Iterable[List]:
         if pre_id is not None and tokens[0] < pre_id:
             raise AnnotationError("malformed input: lexicographically sorted on col 1 at line %s" % lineno)
 
-        pre_id = tokens[0]
+        tokens[1] = int(tokens[1])
+        tokens[2] = int(tokens[2])
 
+        pre_id = tokens[0]
         yield tokens
 
 
@@ -143,18 +154,19 @@ def read_ase_table(filename: str) -> Iterable[List]:
                 raise AnnotationError("malformed input: id must be format as %r at line %d" %
                                       ('chr_pos_rs_ref_alt', l_err))
 
-            yield lineno, infos[0], infos[1], infos, tks[1:]
+            yield infos[0], infos[1], infos, tks[1:]
 
 
 def annotate_aser(lines: Iterable[List], bed_idx: Dict) -> List:
-    for lineno, chrom, pos, infos, values in lines:
-        if lineno == 0:
-            yield infos + ["symbol"] + values
+    lines = iter(lines)
 
+    chrom, pos, infos, values = next(lines)
+    yield infos + ["symbol"] + values
+
+    for chrom, pos, infos, values in lines:
         if chrom in bed_idx:
-            for start, stop, gene, _strand in bed_idx[chrom]:
-                if int(start) <= int(pos) <= int(stop):
-                    yield infos + [gene] + values
+            for interval in bed_idx[chrom][int(pos)]:
+                yield infos + [interval.data] + values
 
 
 def write_annotated_aser_table(lines: Iterable[str], filename):

@@ -58,7 +58,8 @@ def guess_loi_from_bams(args):
         samples.append(Sample(sub(r'\.bam$', '', bam), [], bam))
 
     with Progress(args.progress) as p:
-        create_ase_table_from_bams(args.snps, args.multi, args.bams, args.bed, args.genome_dict, samples, p)
+        create_ase_table_from_bams(args.snps, args.multi, args.bams, args.bed, args.genome_dict, samples, p,
+                                   args.threads)
 
 
 def guess_loi_from_fqs(args):
@@ -84,7 +85,7 @@ def guess_loi_from_fqs(args):
         #     lp_create_ase_table_from_bams(args.snps, args.multi, bams, args.bed, args.genome_dict, samples, p)
         #     lp.print_stats()
         # else:
-        create_ase_table_from_bams(args.snps, args.multi, bams, args.bed, args.genome_dict, samples, p)
+        create_ase_table_from_bams(args.snps, args.multi, bams, args.bed, args.genome_dict, samples, p, args.threads)
 
 
 def split_threads(threads):
@@ -117,7 +118,7 @@ def create_annotated_lines(informative: list, overall: dict, gene_col: int, gene
         yield collapsed_gene
 
 
-def create_ase_table_from_bams(snps, multi_snps, bams, bed, genome, samples, progress):
+def create_ase_table_from_bams(snps, multi_snps, bams, bed, genome, samples, progress, threads):
     # TODO: implement the quantification of the expression with htseq
     names = [s.name for s in samples]
 
@@ -126,15 +127,15 @@ def create_ase_table_from_bams(snps, multi_snps, bams, bed, genome, samples, pro
     else:
         vcf = resolve_multi_snps(snps, multi_snps, genome, bams, progress)
 
-    table = ase_table(bams, vcf, genome, names, progress)
+    table = ase_table(bams, vcf, genome, names, progress, threads)
 
     bed_idx = read_bed_index(bed)
-
     snp_lines = annotate_aser_table_from_bed(table, bed_idx)
+
     next(snp_lines)
     informative_snps = filter_useful_snps(snp_lines, gene_col=5, ratio_min=0.1)
 
-    # The iterator need to be re-created
+    # The generator needs to be re-created
     snp_lines = annotate_aser_table_from_bed(table, bed_idx)
     header = next(snp_lines)
     gene_expression_estimates = compute_overall_expression(snp_lines, gene_col=5)

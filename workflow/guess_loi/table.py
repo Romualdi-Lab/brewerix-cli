@@ -1,6 +1,6 @@
 from itertools import groupby
 from operator import itemgetter
-from typing import List, Iterator, Tuple
+from typing import List, Tuple, Iterable
 
 VERSION = 2
 
@@ -9,17 +9,17 @@ VERSION = 2
 
 
 # @profile(stream=logfile)
-def create_guess_loi_table(lines: Iterator[list], head: List, output: str = "final-output-table.txt"):
+def create_guess_loi_table(lines: Iterable[list], head: List, output: str = "final-output-table.txt"):
     # reduced_snps = sort_by_columns(reduce_snp_redundancies(lines, gene_col), [0, 5, 1])  # sort by chr, gene, position
     reduced_snps = sort_by_columns(lines, [0, 6, 5, 1])  # sort by chr, gene, position
     write_guess_loi_table(reduced_snps, head, output)
 
 
-def sort_by_columns(lines: Iterator[List], columns: List) -> List:
+def sort_by_columns(lines: Iterable[List], columns: List) -> List:
     yield from sorted(lines, key=itemgetter(*columns))
 
 
-def reduce_snp_redundancies(snp_lines: Iterator, gene_col: int) -> List:
+def reduce_snp_redundancies(snp_lines: Iterable, gene_col: int) -> List:
     # DEPRECATED
     for key, values in groupby(snp_lines, itemgetter(gene_col)):
         # TODO: use the iterator rather than the list?
@@ -35,7 +35,6 @@ def reduce_snp_redundancies(snp_lines: Iterator, gene_col: int) -> List:
 
 def extract_informative_snps(values: List, gene_col: int, ratio_min: float = 0.1) -> Tuple:
     # DEPRECATED
-
     interesting_snps = []
     overall_gene_expression = []
 
@@ -66,12 +65,12 @@ def collapse_to_gene_info(gene_annotation: List, overall_gene_expression: List, 
     return gene_annotation + overall_gene_expression
 
 
-def add_fake_pvalue(l: Iterator, value=1.0):
+def add_fake_pvalue(l: Iterable, value=1.0):
     for t in l:
         yield [v for v in t] + [value]
 
 
-def write_guess_loi_table(lines: Iterator[List], header: List, filename: str) -> None:
+def write_guess_loi_table(lines: Iterable[List], header: List, filename: str) -> None:
     with open(filename, 'wt') as out:
         out.write('# version=%d\n' % VERSION)
         out.write('\t'.join(header) + '\n')

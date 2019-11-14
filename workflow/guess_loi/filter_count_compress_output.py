@@ -1,4 +1,5 @@
 from collections import namedtuple
+from itertools import islice
 from typing import Tuple, List
 
 from workflow.guess_loi.table import sort_by_columns, sum_allele_expression, ratio_allele_expression
@@ -27,15 +28,14 @@ def read_annoted_ase(in_file: str) -> Tuple[str, List]:
 
 def increment_values(gene, annotation, values, goe):
     if gene in goe:
-        to_sum = [goe[gene][2], values]
-        goe[gene][2] = [sum(x) for x in zip(*to_sum)]
+        goe[gene][2] = [sum(x) for x in zip(goe[gene][2], values)]
     else:
         goe[gene] = [annotation, [gene], values]
 
 
 def compute_overall_expression(snp_lines, gene_col):
     gene_overall_expression = {}
-    for line in snp_lines:
+    for line in list(islice(snp_lines, 1000)):
         allelic_expressions = line[(gene_col + 1):]
         gene_name = line[gene_col]
         annotation = line[:gene_col]

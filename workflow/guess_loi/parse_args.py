@@ -12,7 +12,7 @@ def parse_args():
 
     parser_bams.add_argument('snps', help="vcfs of the SNPs. Index must be there as well")
     parser_bams.add_argument('bed', help="the bed with the boundaries of the imprinted genes")
-    parser_bams.add_argument('genome_dict', help="the genome dict")
+    parser_bams.add_argument('genome_dict', help="the genome dict. The reference fa")
     parser_bams.add_argument('bams', nargs='+', help="the bams")
     parser_bams.add_argument('--threads', type=int, default=1,
                              help="Number of CPUs to use; please note that any CPU use approximately 2G RAM")
@@ -24,7 +24,7 @@ def parse_args():
 
     parser_fqs.add_argument('snps', help="vcfs of the SNPs. Index must be there as well")
     parser_fqs.add_argument('bed', help="the bed with the boundaries of the imprinted genes")
-    parser_fqs.add_argument('genome_dict', help="the genome dict")
+    parser_fqs.add_argument('genome_dict', help="the genome dict. The reference fa and dict")
     parser_fqs.add_argument('genome_idx', help="the genome index for hisat2")
     parser_fqs.add_argument('fqs', nargs='+', help="the fqs")
     parser_fqs.add_argument('-p', '--paired', dest='is_paired', default=False,

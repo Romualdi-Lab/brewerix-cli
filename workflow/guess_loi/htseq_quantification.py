@@ -12,19 +12,22 @@ def quantify():
     parser.add_argument('bams', nargs='+', help="bam files")
     parser.add_argument('--no-head', dest='nohead', help="increase output verbosity",
                         action="store_false", default=True)
+    parser.add_argument('-s', '--strandness', dest='strand', help="either no, yes or reverse (TrueSeq)", default="no")
+    parser.add_argument('-r', '--order', dest='order', help="either pos or name; default pos", default="pos")
 
     args = parser.parse_args()
 
-    run_quantification(args.bams, args.gtf, args.nohead)
+    run_quantification(args.bams, args.gtf, args.nohead, args.strand, args.order)
 
 
-def run_quantification(files, gtf, head):
+def run_quantification(files, gtf, head, strand, order):
     header = ["gene"] + files
     if head:
         print('\t'.join(header))
 
     cmd = ['htseq-count',
            '-f', 'bam',
-           '-s', 'no'] + files + [gtf]
+           "-r", order,
+           '-s', strand] + files + [gtf]
 
     check_call(cmd)
