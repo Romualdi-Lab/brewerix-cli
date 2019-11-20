@@ -1,5 +1,5 @@
 import argparse
-from os.path import join
+from os.path import join, basename
 from subprocess import check_call
 from tempfile import TemporaryDirectory
 from typing import List
@@ -26,7 +26,7 @@ def run_concat_vcfs(files: List, output: str):
         gzipped_files = []
 
         for file in files:
-            gfile = join(wdir, file + ".gz")
+            gfile = join(wdir, basename(file) + ".gz")
             gzipped_files.append(gfile)
 
             with open(gfile, "wb") as dest:

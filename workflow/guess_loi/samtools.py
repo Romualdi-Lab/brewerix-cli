@@ -1,5 +1,7 @@
+from os.path import join
 from re import search
 from subprocess import PIPE, check_output, check_call, Popen
+from tempfile import TemporaryDirectory
 
 
 def call_samtools_index(bam):
@@ -26,6 +28,47 @@ def samtools_view(stdin, bed):
     ]
 
     return Popen(args, stdin=stdin, stdout=PIPE)
+
+
+def split_bam_by_chromosomes(bam, wdir, chromosomes):
+    filenames = []
+    for chrom in chromosomes:
+        filename = join(wdir, chrom + '_' + bam)
+        filenames.append(filename)
+        check_call([
+            'samtools',
+            "view",
+            '-u',
+            bam,
+            chrom,
+            '-o', filename
+        ])
+        call_samtools_index(filename)
+    return filenames
+
+
+def split_vcf_by_chromosomes(vcf, wdir, chromosomes):
+    filenames = []
+    with TemporaryDirectory() as twdir:
+        vcf_gz = join(twdir, vcf + '.gz')
+        with open(vcf_gz, "wb") as fd:
+            check_call(["bgzip", "-c", vcf], stdout=fd)
+
+        check_call(["tabix", "-p", "vcf", vcf_gz])
+
+        for chrom in chromosomes:
+            filename = join(wdir, chrom + '_' + vcf)
+            filenames.append(filename)
+            check_call([
+                'bcftools',
+                "view",
+                vcf_gz,
+                chrom,
+                '-o', filename
+            ])
+            check_call('gatk IndexFeatureFile -F ' + filename, shell=True)
+
+        return filenames
 
 
 def samtools_sort(stdin, output, samtools_threads):

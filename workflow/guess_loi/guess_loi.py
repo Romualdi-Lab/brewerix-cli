@@ -1,8 +1,10 @@
 import locale
+from multiprocessing.pool import Pool
+from os import mkdir
 from os.path import exists, join
 from re import sub
 from tempfile import TemporaryDirectory
-from typing import List
+from typing import List, Optional
 
 import pkg_resources
 
@@ -12,11 +14,12 @@ from workflow.guess_loi.checks import check_file_exists, check_command_availabil
 from workflow.guess_loi.concat_vcfs import run_concat_vcfs
 from workflow.guess_loi.filter_count_compress_output import filter_useful_snps, \
     compute_overall_expression
-from workflow.guess_loi.haplotype_caller_rna import run_haplotype_caller
+from workflow.guess_loi.haplotype_caller_rna import run_haplotype_caller, haplotype_wrapper
 from workflow.guess_loi.parse_args import parse_args
 from workflow.guess_loi.progress import Progress
 from workflow.guess_loi.samples import paired_samples, single_samples, Sample
-from workflow.guess_loi.samtools import check_rg_tag, call_samtools_index
+from workflow.guess_loi.samtools import check_rg_tag, call_samtools_index, split_bam_by_chromosomes, \
+    split_vcf_by_chromosomes
 from workflow.guess_loi.select_variants import run_select_variants
 from workflow.guess_loi.snp_gene_association import annotate_aser_table_from_bed, read_bed_index, create_gene2tss
 from workflow.guess_loi.table import create_guess_loi_table, collapse_to_gene_info
@@ -120,16 +123,19 @@ def create_annotated_lines(informative: list, overall: dict, gene_col: int, gene
 
 def create_ase_table_from_bams(snps, multi_snps, bams, bed, genome, samples, progress, threads):
     # TODO: implement the quantification of the expression with htseq
+    # _, half_threads = split_threads(threads)
     names = [s.name for s in samples]
+    bed_idx = read_bed_index(bed)
 
     if multi_snps is None:
         vcf = snps
     else:
-        vcf = resolve_multi_snps(snps, multi_snps, genome, bams, progress)
+        chromosomes = list(bed_idx.keys())
+        # vcf = resolve_multi_snps(snps, multi_snps, genome, bams, progress, chromosomes, half_threads)
+        vcf = resolve_multi_snps_sales_way(snps, multi_snps, genome, bams, progress, chromosomes, threads)
 
     table = ase_table(bams, vcf, genome, names, progress, threads)
 
-    bed_idx = read_bed_index(bed)
     snp_lines = annotate_aser_table_from_bed(table, bed_idx)
 
     next(snp_lines)
@@ -138,14 +144,15 @@ def create_ase_table_from_bams(snps, multi_snps, bams, bed, genome, samples, pro
     # The generator needs to be re-created
     snp_lines = annotate_aser_table_from_bed(table, bed_idx)
     header = next(snp_lines)
+
     gene_expression_estimates = compute_overall_expression(snp_lines, gene_col=5)
 
     gene2tss = create_gene2tss(bed)
 
     annotated_lines = create_annotated_lines(informative_snps, gene_expression_estimates,
                                              gene_col=5, genes2tss=gene2tss)
-    header.insert(6, "TSS")
 
+    header.insert(6, "TSS")
     # TODO: bypass this ordering step.
     # lines = sort_file_by_gene_name_and_position(annotated_lines)
 
@@ -154,18 +161,78 @@ def create_ase_table_from_bams(snps, multi_snps, bams, bed, genome, samples, pro
     progress.complete()
 
 
-def resolve_multi_snps(snps: str, multi_snps: str, genome: str, bams: List[str], progress: Progress) -> str:
-    output = "hc-merged.vcf"
+def resolve_multi_snps(snps: str, multi_snps: str, genome: str, bams: List[str], progress: Progress,
+                       chromosomes: List[str], threads: int = 1) -> str:
 
-    if not exists("hc-merged.vcf"):
+    output = "hc-merged.vcf"
+    if not exists(output):
         progress.start("Resolve multi SNPs")
-        with TemporaryDirectory() as wdir:
+
+        # with TemporaryDirectory() as wdir:
+        if True:
+            wdir = "intermediate_file"
+            mkdir(wdir)
+
+            file_list = [split_vcf_by_chromosomes(multi_snps, wdir, chromosomes)]
+            for bam in bams:
+                file_list.append(split_bam_by_chromosomes(bam, wdir, chromosomes))
+
+            file_chunks = list(zip(*file_list))
+
+        # exit(1)
+        #
+        # with TemporaryDirectory() as wdir:
+            with Pool(threads) as pool:
+                args = ((chrom_files, genome, join(wdir, str(idx) + '.vcf'))
+                        for idx, chrom_files in enumerate(file_chunks))
+
+                files = pool.map(haplotype_wrapper, args)
+
             called = join(wdir, "called.vcf")
             concatenated = join(wdir, "concatenated.vcf")
             called_gt = join(wdir, "called_gt.vcf")
-            run_haplotype_caller(multi_snps, bams, genome, called)
+
+            run_concat_vcfs([snps] + files, concatenated)
+            annotate_vcf_with_heterozygous_genotype(called, called_gt, "gentype")
+
+            # run_haplotype_caller(multi_snps, bams, genome, called)
+            # annotate_vcf_with_heterozygous_genotype(called, called_gt, "gentype")
+            # run_concat_vcfs([snps, called_gt], concatenated)
+            run_select_variants(genome, concatenated, ["--select-type-to-exclude", "INDEL"], output)
+
+        progress.complete()
+
+    return output
+
+
+def resolve_multi_snps_sales_way(snps: str, multi_snps: str, genome: str, bams: List[str], progress: Progress,
+                       chromosomes: List[str], threads: int = 1) -> str:
+
+    output = "hc-merged.vcf"
+    if not exists(output):
+        progress.start("Resolve multi SNPs")
+
+        # with TemporaryDirectory() as wdir:
+        if True:
+            wdir = "intermediate_file"
+            mkdir(wdir)
+
+            args = ((multi_snps, bams, genome, join(wdir, chrom + '.vcf'), chrom, 1)
+                    for chrom in set(chromosomes) - {"X"})
+
+            with Pool(threads) as pool:
+                files = pool.map(haplotype_wrapper, args)
+                if "X" in chromosomes:
+                    files.append(haplotype_wrapper((multi_snps, bams, genome, join(wdir, 'X.vcf'), "X", threads)))
+
+            called = join(wdir, "called.vcf")
+            concatenated = join(wdir, "concatenated.vcf")
+            called_gt = join(wdir, "called_gt.vcf")
+
+            run_concat_vcfs(files, called)
             annotate_vcf_with_heterozygous_genotype(called, called_gt, "gentype")
             run_concat_vcfs([snps, called_gt], concatenated)
+
             run_select_variants(genome, concatenated, ["--select-type-to-exclude", "INDEL"], output)
 
         progress.complete()

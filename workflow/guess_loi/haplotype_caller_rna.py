@@ -19,7 +19,13 @@ def haplotype_caller():
     run_haplotype_caller(args.vcf, args.bams, args.genome, args.output)
 
 
-def run_haplotype_caller(alleles_vcf: str, bams: List[str], genome: str, haplotype_file: str):
+def haplotype_wrapper(args):
+    vcf, bams, genome, haplotype_file, chrom, threads = args
+    run_haplotype_caller(vcf, bams, genome, haplotype_file, chrom, threads)
+    return haplotype_file
+
+
+def run_haplotype_caller(alleles_vcf: str, bams: List[str], genome: str, haplotype_file: str, chrom: str, threads: int = 1):
 
     # TODO implement discovery mode
 
@@ -32,6 +38,8 @@ def run_haplotype_caller(alleles_vcf: str, bams: List[str], genome: str, haploty
         "--genotyping-mode", "GENOTYPE_GIVEN_ALLELES",
         "--max-alternate-alleles", "1",
         "-stand-call-conf", "1",
+        "--native-pair-hmm-threads", str(threads),
+        "-L", chrom + ":1+",
         "--alleles", alleles_vcf,
         "--dbsnp", alleles_vcf,
         ] + bams_input + [

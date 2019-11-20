@@ -27,10 +27,10 @@ def ase_table(bams, snps, genome, samples: List[Sample], progress: Progress, thr
 
         with Pool(threads) as pool:
             args = ((bam, snps, genome, sample) for bam, sample in zip(bams, samples))
-            ases = list(progress.track("ASE Read Count", pool.imap_unordered(aser_count, args), len(bams)))
+            ases = dict(progress.track("ASE Read Count", pool.imap_unordered(aser_count, args), len(bams)))
 
         progress.start("ASE merge")
-        write_ase(merge_ase(ases), samples, output)
+        write_ase(merge_ase(ases, samples), samples, output)
         progress.complete()
         check_call(["touch", "do_not_run_ASER"])
 
@@ -49,7 +49,7 @@ def aser_count(args):
         "-O", step1,
     ])
 
-    return read_ase(step1)
+    return sample, read_ase(step1)
 
 
 def read_ase(input_: str, min_coverage: int = 5) -> Ase:
@@ -93,20 +93,20 @@ def binomial_test(ref, alt):
     return binom_test(x, n, p=1/6, alternative="greater")
 
 
-def merge_ase(ases: List[Ase]) -> Ase:
+def merge_ase(ases: Dict[str, Ase], samples: List[str]) -> Ase:
     all_keys = merge_keys(ases)
-    return gather_values(all_keys, ases)
+    return gather_values(all_keys, ases, samples)
 
 
-def merge_keys(ases: List[Ase]) -> List[AseKey]:
+def merge_keys(ases: Dict[str, Ase]) -> List[AseKey]:
     keys = set()
-    for ase in ases:
+    for ase in ases.values():
         keys |= set(ase.keys())
     return sorted(keys)
 
 
-def gather_values(all_keys: List[AseKey], ases: List[Ase]) -> Ase:
-    return {key: '\t'.join([ase.get(key, "NA") for ase in ases]) for key in all_keys}
+def gather_values(all_keys: List[AseKey], ases: Dict[str, Ase], samples: List[str]) -> Ase:
+    return {key: '\t'.join([ases[sample].get(key, "NA") for sample in samples]) for key in all_keys}
 
 
 def write_ase(ase: Ase, samples: List[Sample], output: str) -> None:

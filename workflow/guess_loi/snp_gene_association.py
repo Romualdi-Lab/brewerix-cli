@@ -84,7 +84,7 @@ def annotate_aser_table_from_bed(aser_table_file: str, bed_idx: dict) -> Iterato
     # bed_idx = read_bed_index(bed_file)
 
     # TODO: remove pseudoautosomal region
-    read_lines = list(read_ase_table(aser_table_file))
+    read_lines = read_ase_table(aser_table_file)
     annotated_lines = annotate_aser(read_lines, bed_idx)
     return annotated_lines
     # write_annotated_aser_table(annotated_lines, output)
