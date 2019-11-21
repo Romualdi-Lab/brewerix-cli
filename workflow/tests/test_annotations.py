@@ -1,5 +1,6 @@
 from tempfile import NamedTemporaryFile
 
+from intervaltree import IntervalTree
 from pytest import raises
 
 from workflow.guess_loi.snp_gene_association import AnnotationError, read_bed_index, annotate_aser, read_ase_table
@@ -54,10 +55,12 @@ def test_annotate_aser_simple():
     values = ['r1/a1', 'r2/a2']
     
     lines = [
-        [0, 'chr', 'pos', infos_head, values_head],
-        [1, '1', '20', infos, values],
+        ['chr', 'pos', infos_head, values_head],
+        ['1', '20', infos, values],
     ]
-    bed_idx = {'1': [[5, 300, "Gene_a", '+']]}
+    tree = IntervalTree()
+    tree[5:300] = "Gene_a"
+    bed_idx = {'1': tree}
 
     annotated = [
         infos_head + ['symbol'] + values_head,

@@ -21,16 +21,14 @@ def test_failure_file_with_no_header():
             list(read_gatk_ase(f.name))
 
 def test_merge():
-    ases = [
-        {
+    ases = {"a":{
             'k1': 'r1/a1',
             'k2': 'r2/a2',
         },
-        {
+            "b": {
             'k1': 'r3/a3',
             'k3': 'r4/a4',
-        },
-    ]  # type: List[Ase]
+        }}  # type: Dict[(str,Ase)]
 
     merged = {
         'k1': 'r1/a1\tr3/a3',
@@ -38,4 +36,4 @@ def test_merge():
         'k3': 'NA\tr4/a4',
     }
 
-    assert merge_ase(ases) == merged
+    assert merge_ase(ases, ["a", "b"]) == merged
