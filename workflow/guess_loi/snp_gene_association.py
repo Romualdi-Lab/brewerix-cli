@@ -113,7 +113,7 @@ def read_bed(fd: TextIO) -> Dict:
 def create_gene2tss(bed_file: str) -> Dict:
     with open(bed_file, 'rt') as fd:
         d = {}
-        for chrm, start, stop, gene, _ in read_line_bed(fd):
+        for chrm, start, stop, gene, *_ in read_line_bed(fd):
             d[gene] = int(start)
 
     return d
@@ -126,11 +126,11 @@ def read_line_bed(fd: TextIO) -> Iterable[List]:
     for lineno, line in enumerate(fd, 1):
         tokens = line.rstrip().split('\t')
 
-        if len(tokens) != 5:
-            raise AnnotationError("malformed input: incorrect number of columns at line %s" % lineno)
+        if len(tokens) < 5:
+            raise AnnotationError("malformed input: incorrect number of columns at line %d" % lineno)
 
         if pre_id is not None and tokens[0] < pre_id:
-            raise AnnotationError("malformed input: lexicographically sorted on col 1 at line %s" % lineno)
+            raise AnnotationError("malformed input: lexicographically sorted on col 1 at line %d" % lineno)
 
         tokens[1] = int(tokens[1])
         tokens[2] = int(tokens[2])

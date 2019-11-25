@@ -3,8 +3,7 @@ from multiprocessing.pool import Pool
 from os import mkdir
 from os.path import exists, join
 from re import sub
-from tempfile import TemporaryDirectory
-from typing import List, Optional
+from typing import List
 
 import pkg_resources
 
@@ -14,7 +13,7 @@ from workflow.guess_loi.checks import check_file_exists, check_command_availabil
 from workflow.guess_loi.concat_vcfs import run_concat_vcfs
 from workflow.guess_loi.filter_count_compress_output import filter_useful_snps, \
     compute_overall_expression
-from workflow.guess_loi.haplotype_caller_rna import run_haplotype_caller, haplotype_wrapper
+from workflow.guess_loi.haplotype_caller_rna import haplotype_wrapper
 from workflow.guess_loi.parse_args import parse_args
 from workflow.guess_loi.progress import Progress
 from workflow.guess_loi.samples import paired_samples, single_samples, Sample
@@ -82,12 +81,6 @@ def guess_loi_from_fqs(args):
             if not exists(bam + '.bai'):
                 call_samtools_index(bam)
 
-        # if False:
-        #     lp = LineProfiler()
-        #     lp_create_ase_table_from_bams = lp(create_ase_table_from_bams)
-        #     lp_create_ase_table_from_bams(args.snps, args.multi, bams, args.bed, args.genome_dict, samples, p)
-        #     lp.print_stats()
-        # else:
         create_ase_table_from_bams(args.snps, args.multi, bams, args.bed, args.genome_dict, samples, p, args.threads)
 
 
@@ -123,7 +116,6 @@ def create_annotated_lines(informative: list, overall: dict, gene_col: int, gene
 
 def create_ase_table_from_bams(snps, multi_snps, bams, bed, genome, samples, progress, threads):
     # TODO: implement the quantification of the expression with htseq
-    # _, half_threads = split_threads(threads)
     names = [s.name for s in samples]
     bed_idx = read_bed_index(bed)
 
@@ -131,8 +123,7 @@ def create_ase_table_from_bams(snps, multi_snps, bams, bed, genome, samples, pro
         vcf = snps
     else:
         chromosomes = list(bed_idx.keys())
-        # vcf = resolve_multi_snps(snps, multi_snps, genome, bams, progress, chromosomes, half_threads)
-        vcf = resolve_multi_snps_sales_way(snps, multi_snps, genome, bams, progress, chromosomes, threads)
+        vcf = resolve_multi_snps(snps, multi_snps, genome, bams, progress, chromosomes, threads)
 
     table = ase_table(bams, vcf, genome, names, progress, threads)
 
@@ -161,9 +152,9 @@ def create_ase_table_from_bams(snps, multi_snps, bams, bed, genome, samples, pro
     progress.complete()
 
 
-def resolve_multi_snps(snps: str, multi_snps: str, genome: str, bams: List[str], progress: Progress,
-                       chromosomes: List[str], threads: int = 1) -> str:
-
+def _resolve_multi_snps(snps: str, multi_snps: str, genome: str, bams: List[str], progress: Progress,
+                        chromosomes: List[str], threads: int = 1) -> str:
+    # DEPRECATED
     output = "hc-merged.vcf"
     if not exists(output):
         progress.start("Resolve multi SNPs")
@@ -182,6 +173,7 @@ def resolve_multi_snps(snps: str, multi_snps: str, genome: str, bams: List[str],
         # exit(1)
         #
         # with TemporaryDirectory() as wdir:
+
             with Pool(threads) as pool:
                 args = ((chrom_files, genome, join(wdir, str(idx) + '.vcf'))
                         for idx, chrom_files in enumerate(file_chunks))
@@ -205,7 +197,7 @@ def resolve_multi_snps(snps: str, multi_snps: str, genome: str, bams: List[str],
     return output
 
 
-def resolve_multi_snps_sales_way(snps: str, multi_snps: str, genome: str, bams: List[str], progress: Progress,
+def resolve_multi_snps(snps: str, multi_snps: str, genome: str, bams: List[str], progress: Progress,
                        chromosomes: List[str], threads: int = 1) -> str:
 
     output = "hc-merged.vcf"
@@ -215,22 +207,26 @@ def resolve_multi_snps_sales_way(snps: str, multi_snps: str, genome: str, bams: 
         # with TemporaryDirectory() as wdir:
         if True:
             wdir = "intermediate_file"
-            mkdir(wdir)
-
-            args = ((multi_snps, bams, genome, join(wdir, chrom + '.vcf'), chrom, 1)
-                    for chrom in set(chromosomes) - {"X"})
-
-            with Pool(threads) as pool:
-                files = pool.map(haplotype_wrapper, args)
-                if "X" in chromosomes:
-                    files.append(haplotype_wrapper((multi_snps, bams, genome, join(wdir, 'X.vcf'), "X", threads)))
-
             called = join(wdir, "called.vcf")
+            if not exists(wdir):
+                mkdir(wdir)
+
+            if not exists(called):
+                args = ((multi_snps, bams, genome, join(wdir, chrom + '.vcf'), chrom, 1)
+                        for chrom in set(chromosomes) - {"X"})
+
+                with Pool(threads) as pool:
+                    files = pool.map(haplotype_wrapper, args)
+                    if "X" in chromosomes:
+                        files.append(haplotype_wrapper((multi_snps, bams, genome, join(wdir, 'X.vcf'), "X", threads)))
+
+                called = join(wdir, "called.vcf")
+                run_concat_vcfs(files, called)
+
             concatenated = join(wdir, "concatenated.vcf")
             called_gt = join(wdir, "called_gt.vcf")
 
-            run_concat_vcfs(files, called)
-            annotate_vcf_with_heterozygous_genotype(called, called_gt, "gentype")
+            annotate_vcf_with_heterozygous_genotype(called, called_gt, "Genotype")
             run_concat_vcfs([snps, called_gt], concatenated)
 
             run_select_variants(genome, concatenated, ["--select-type-to-exclude", "INDEL"], output)
