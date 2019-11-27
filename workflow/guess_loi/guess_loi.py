@@ -229,7 +229,8 @@ def resolve_multi_snps(snps: str, multi_snps: str, genome: str, bams: List[str],
             annotate_vcf_with_heterozygous_genotype(called, called_gt, "Genotype")
             run_concat_vcfs([snps, called_gt], concatenated)
 
-            run_select_variants(genome, concatenated, ["--select-type-to-exclude", "INDEL"], output)
+            run_select_variants(genome, concatenated, ["--select-type-to-exclude", "INDEL", '--exclude-ids', '.'],
+                                output)
 
         progress.complete()
 
