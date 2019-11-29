@@ -2,13 +2,10 @@ from itertools import groupby
 from operator import itemgetter
 from typing import List, Tuple, Iterable
 
+
 VERSION = 2
 
 
-# logfile = open("memory-profiler.log", "w+")
-
-
-# @profile(stream=logfile)
 def create_guess_loi_table(lines: Iterable[list], head: List, output: str = "final-output-table.txt"):
     # reduced_snps = sort_by_columns(reduce_snp_redundancies(lines, gene_col), [0, 5, 1])  # sort by chr, gene, position
     reduced_snps = sort_by_columns(lines, [0, 6, 5, 1])  # sort by chr, gene, position

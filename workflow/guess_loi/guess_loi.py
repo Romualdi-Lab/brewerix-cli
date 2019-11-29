@@ -226,8 +226,11 @@ def resolve_multi_snps(snps: str, multi_snps: str, genome: str, bams: List[str],
             concatenated = join(wdir, "concatenated.vcf")
             called_gt = join(wdir, "called_gt.vcf")
 
-            annotate_vcf_with_heterozygous_genotype(called, called_gt, "Genotype")
-            run_concat_vcfs([snps, called_gt], concatenated)
+            if not exists(called_gt):
+                annotate_vcf_with_heterozygous_genotype(called, called_gt, "Genotype")
+
+            if not exists(concatenated):
+                run_concat_vcfs([snps, called_gt], concatenated)
 
             run_select_variants(genome, concatenated, ["--select-type-to-exclude", "INDEL", '--exclude-ids', '.'],
                                 output)

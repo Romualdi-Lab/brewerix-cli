@@ -3,7 +3,7 @@ from argparse import ArgumentParser
 from subprocess import check_call, check_output, STDOUT
 from typing import List
 
-from workflow.guess_loi.checks import check_file_exists, vcf_index_exits
+from workflow.guess_loi.checks import vcf_index_exits
 
 
 def haplotype_caller():
