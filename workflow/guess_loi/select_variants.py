@@ -1,6 +1,7 @@
 import argparse
 from subprocess import check_call
 
+
 def select_variants():
     parser = argparse.ArgumentParser(description="""
         A wrapper for select variants from GATK

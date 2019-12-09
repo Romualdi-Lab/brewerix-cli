@@ -1,4 +1,6 @@
 import re
+from builtins import str, int
+
 from argparse import ArgumentParser
 from subprocess import check_call, check_output, STDOUT
 from typing import List

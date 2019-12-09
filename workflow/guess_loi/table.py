@@ -3,12 +3,12 @@ from operator import itemgetter
 from typing import List, Tuple, Iterable
 
 
-VERSION = 2
+VERSION = 3
 
 
-def create_guess_loi_table(lines: Iterable[list], head: List, output: str = "final-output-table.txt"):
+def create_guess_loi_table(lines: Iterable, head: List, output: str = "final-output-table.txt") -> None:
     # reduced_snps = sort_by_columns(reduce_snp_redundancies(lines, gene_col), [0, 5, 1])  # sort by chr, gene, position
-    reduced_snps = sort_by_columns(lines, [0, 6, 5, 1])  # sort by chr, gene, position
+    reduced_snps = sort_by_columns(lines, [0, 8, 5, 1])  # sort by chr, TSS, gene, position
     write_guess_loi_table(reduced_snps, head, output)
 
 
@@ -62,12 +62,12 @@ def collapse_to_gene_info(gene_annotation: List, overall_gene_expression: List, 
     return gene_annotation + overall_gene_expression
 
 
-def add_fake_pvalue(l: Iterable, value=1.0):
-    for t in l:
+def add_fake_pvalue(ac_list: Iterable, value=1.0):
+    for t in ac_list:
         yield [v for v in t] + [value]
 
 
-def write_guess_loi_table(lines: Iterable[List], header: List, filename: str) -> None:
+def write_guess_loi_table(lines: List[List[str]], header: List, filename: str) -> None:
     with open(filename, 'wt') as out:
         out.write('# version=%d\n' % VERSION)
         out.write('\t'.join(header) + '\n')

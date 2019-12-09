@@ -12,13 +12,18 @@ def test_filter_useful_snps():
                  ["chr2", 9, "rs_C", "C", '115,100,0.001', '2,0,1', '60,0,1']]
 
     genes2tss = {"A": 1, "B": 3, "C": 4, "D": 2}
+    genes2info = {"A": ["pc", "mode:Imprinted"],
+                  "B": ["pc", "mode:Imprinted"],
+                  "C": ["pseudogene", "mode:NotImprinted"],
+                  "D": ["pc;PAR", "mode:Imprinted"]}
 
     good_out = []
     for line in good_snps:
         out = line[:]
-        out.insert(4, int(genes2tss[line[3]]))
+        out = out[:4] + genes2info[line[3]] + [int(genes2tss[line[3]])] + out[4:]
         good_out.append(out)
 
-    good_out.append(['chr2', 4, 'rs_multi', 'D', 2, '5,0,1.0', '6,0,1.0', '10,0,1.0'])
+    good_out.append(['chr2', 4, 'rs_multi', 'D', "pc;PAR", "mode:Imprinted", 2, '5,0,1.0', '6,0,1.0', '10,0,1.0'])
 
-    assert list(create_annotated_lines(good_snps, goe, gene_col=3, genes2tss=genes2tss)) == good_out
+    assert list(create_annotated_lines(good_snps, goe, gene_col=3,
+                                       genes2tss=genes2tss, genes2info=genes2info)) == good_out

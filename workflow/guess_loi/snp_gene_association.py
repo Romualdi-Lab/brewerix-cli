@@ -119,6 +119,22 @@ def create_gene2tss(bed_file: str) -> Dict:
     return d
 
 
+def create_gene2info(bed_file: str) -> Dict:
+    with open(bed_file, 'rt') as fd:
+        d = {}
+        for chrm, start, stop, gene, *info in read_line_bed(fd):
+            additional = ["", ""]
+            if len(info) == 2:
+                additional = [info[1], ""]
+            if len(info) == 3:
+                additional = [info[1], info[2]]
+            print(additional)
+
+            d[gene] = additional
+
+    return d
+
+
 def read_line_bed(fd: TextIO) -> Iterable[List]:
     # TODO: check if bed has 5 tokens
     pre_id = None

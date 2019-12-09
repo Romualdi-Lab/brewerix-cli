@@ -20,9 +20,10 @@ from workflow.guess_loi.samples import paired_samples, single_samples, Sample
 from workflow.guess_loi.samtools import check_rg_tag, call_samtools_index, split_bam_by_chromosomes, \
     split_vcf_by_chromosomes
 from workflow.guess_loi.select_variants import run_select_variants
-from workflow.guess_loi.snp_gene_association import annotate_aser_table_from_bed, read_bed_index, create_gene2tss
+from workflow.guess_loi.snp_gene_association import annotate_aser_table_from_bed, read_bed_index, create_gene2tss, \
+    create_gene2info
 from workflow.guess_loi.table import create_guess_loi_table, collapse_to_gene_info
-from workflow.guess_loi.vcf_related_functions import annotate_vcf_with_heterozygous_genotype
+from workflow.guess_loi.vcf_related_functions import annotate_vcf_with_heterozygous_genotype, remove_invalid_snv_ids
 
 
 class InputError(Exception):
@@ -92,25 +93,31 @@ def split_threads(threads):
         return threads, s
 
 
-def create_annotated_lines(informative: list, overall: dict, gene_col: int, genes2tss: dict,
-                           snp_id_text: str = "rs_multi", fake_pvalue: float = 1.0):
+def create_annotated_lines(informative: List, overall: dict, gene_col: int,
+                           genes2tss: dict, genes2info: dict,
+                           snp_id_text: str = "rs_multi", fake_pvalue: float = 1.0) -> List:
+
     all_genes_set = set(overall.keys())
 
     for line in informative:
-        line_cp = line[:]
+        line_cp: List = line[:]
         gene = line_cp[gene_col]
         gset = {gene}
-        gene_tss = genes2tss[gene]
+
+        insert_info = genes2info[gene] + [int(genes2tss[gene])]
         all_genes_set = all_genes_set.difference(gset)
         line_cp[1] = int(line_cp[1])
-        line_cp.insert(gene_col+1, int(gene_tss))
+
+        line_cp = line_cp[:gene_col+1] + insert_info + line_cp[gene_col+1]
         yield line_cp
 
     for gene in all_genes_set:
         annotation = overall[gene][0] + overall[gene][1]
-        gene_tss = int(genes2tss[gene])
+        insert_info = genes2info[gene] + [int(genes2tss[gene])]
+
         collapsed_gene = collapse_to_gene_info(annotation, overall[gene][2], snp_id_text, fake_pvalue)
-        collapsed_gene.insert(gene_col+1, gene_tss)
+        collapsed_gene = collapsed_gene[:gene_col+1] + insert_info + collapsed_gene[gene_col+1:]
+
         yield collapsed_gene
 
 
@@ -139,13 +146,13 @@ def create_ase_table_from_bams(snps, multi_snps, bams, bed, genome, samples, pro
     gene_expression_estimates = compute_overall_expression(snp_lines, gene_col=5)
 
     gene2tss = create_gene2tss(bed)
+    gene2info = create_gene2info(bed)
 
     annotated_lines = create_annotated_lines(informative_snps, gene_expression_estimates,
-                                             gene_col=5, genes2tss=gene2tss)
+                                             gene_col=5, genes2tss=gene2tss, genes2info=gene2info)
 
-    header.insert(6, "TSS")
+    header = header[:6] + ["type", "info", "TSS"] + header[6:]
     # TODO: bypass this ordering step.
-    # lines = sort_file_by_gene_name_and_position(annotated_lines)
 
     progress.start('Format results')
     create_guess_loi_table(annotated_lines, header, "guess_loi_table.txt")
@@ -231,8 +238,10 @@ def resolve_multi_snps(snps: str, multi_snps: str, genome: str, bams: List[str],
 
             if not exists(concatenated):
                 run_concat_vcfs([snps, called_gt], concatenated)
+                remove_invalid_snv_ids(concatenated)
 
-            run_select_variants(genome, concatenated, ["--select-type-to-exclude", "INDEL", '--exclude-ids', '.'],
+            run_select_variants(genome, concatenated, ["--select-type-to-exclude",
+                                                       "INDEL", '--exclude-ids', '.'],
                                 output)
 
         progress.complete()
