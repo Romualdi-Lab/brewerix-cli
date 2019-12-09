@@ -21,6 +21,11 @@ setup(
         'htseq',
         'pysam'
     ],
+    extras_require={
+        'test': [
+            'pytest',
+        ],
+    },
     entry_points={
         'console_scripts': [
             'guess-LOI=workflow.guess_loi.guess_loi:guess_loi',

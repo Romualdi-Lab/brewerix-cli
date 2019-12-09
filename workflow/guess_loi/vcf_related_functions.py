@@ -14,7 +14,7 @@ def reformat_vcf_with_het_genotype():
                 """)
     parser.add_argument('output', help="output file name")
     parser.add_argument('vcf', help="vcfs of the SNPs")
-    parser.add_argument('--sampleName', help="the header name for GT column", default="gentype")
+    parser.add_argument('--sampleName', help="the header name for GT column", default="Genotype")
 
     args = parser.parse_args()
 
