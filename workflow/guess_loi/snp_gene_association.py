@@ -128,7 +128,6 @@ def create_gene2info(bed_file: str) -> Dict:
                 additional = [info[1], ""]
             if len(info) == 3:
                 additional = [info[1], info[2]]
-            print(additional)
 
             d[gene] = additional
 

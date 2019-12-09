@@ -108,7 +108,7 @@ def create_annotated_lines(informative: List, overall: dict, gene_col: int,
         all_genes_set = all_genes_set.difference(gset)
         line_cp[1] = int(line_cp[1])
 
-        line_cp = line_cp[:gene_col+1] + insert_info + line_cp[gene_col+1]
+        line_cp = line_cp[:gene_col+1] + insert_info + line_cp[gene_col+1:]
         yield line_cp
 
     for gene in all_genes_set:
