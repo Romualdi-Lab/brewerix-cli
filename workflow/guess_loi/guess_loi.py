@@ -100,7 +100,7 @@ def create_annotated_lines(informative: List, overall: dict, gene_col: int,
     all_genes_set = set(overall.keys())
 
     for line in informative:
-        line_cp: List = line[:]
+        line_cp = line[:]
         gene = line_cp[gene_col]
         gset = {gene}
 
