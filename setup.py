@@ -18,7 +18,6 @@ setup(
     install_requires=[
         'intervaltree',
         'scipy',
-        'htseq',
         'pysam'
     ],
     extras_require={
@@ -41,7 +40,6 @@ setup(
             'run-hisat2=workflow.guess_loi.hisat2_align:run_hisat2',
             'fake_genotype=workflow.guess_loi.vcf_related_functions:reformat_vcf_with_het_genotype',
             'exclude_invalid_snv_ids=workflow.guess_loi.vcf_related_functions:exclude_invalid_snv_ids',
-            'quantify=workflow.guess_loi.htseq_quantification:quantify',
         ],
     }
 )
