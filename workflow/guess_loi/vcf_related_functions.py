@@ -54,7 +54,7 @@ def remove_invalid_snv_ids(vcf_file):
         with VariantFile(temp_file, 'w', header=vcf.header) as out:
             for line in vcf:
                 snv_id = line.id
-                if "_" in snv_id:
+                if snv_id is not None and "_" in snv_id:
                     warning("Invalid SNV id found will be filtered out: %s" % snv_id)
                     continue
                 out.write(line)
