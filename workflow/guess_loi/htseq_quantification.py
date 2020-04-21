@@ -2,6 +2,7 @@ from argparse import ArgumentParser
 from subprocess import check_call
 
 # htseq-count -s no -f bam HPD01_naive.bam human-reduced.gtf >HPD01_naive-no-str.quant.txt
+from workflow.guess_loi.checks import check_command_availability
 
 
 def quantify():
@@ -21,6 +22,7 @@ def quantify():
 
 
 def run_quantification(files, gtf, head, strand, order):
+    check_command_availability(['htseq-count'])
     header = ["gene"] + files
     if head:
         print('\t'.join(header))

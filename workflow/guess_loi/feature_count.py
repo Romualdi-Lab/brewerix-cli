@@ -1,6 +1,8 @@
 from argparse import ArgumentParser
 from subprocess import check_call
 
+from workflow.guess_loi.checks import check_command_availability
+
 
 def feature_counts():
     parser = ArgumentParser(description="""
@@ -23,6 +25,7 @@ def feature_counts():
 
 
 def run_quantification(files, gtf, output, strand, paired, threads, dry_run):
+    check_command_availability(['featureCounts'])
     strandness = {'0': "unstranded",
                   '1': "stranded",
                   '2': "reverse"}
