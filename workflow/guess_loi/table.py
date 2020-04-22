@@ -3,7 +3,7 @@ from operator import itemgetter
 from typing import List, Tuple, Iterable
 
 
-VERSION = 3
+VERSION = 4
 
 
 def create_guess_loi_table(lines: Iterable, head: List, output: str = "final-output-table.txt") -> None:

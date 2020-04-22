@@ -122,7 +122,6 @@ def create_annotated_lines(informative: List, overall: dict, gene_col: int,
 
 
 def create_ase_table_from_bams(snps, multi_snps, bams, bed, genome, samples, progress, threads):
-    # TODO: implement the quantification of the expression with htseq
     names = [s.name for s in samples]
     bed_idx = read_bed_index(bed)
 
@@ -151,7 +150,7 @@ def create_ase_table_from_bams(snps, multi_snps, bams, bed, genome, samples, pro
     annotated_lines = create_annotated_lines(informative_snps, gene_expression_estimates,
                                              gene_col=5, genes2tss=gene2tss, genes2info=gene2info)
 
-    header = header[:6] + ["type", "info", "TSS"] + header[6:]
+    header = header[:6] + ["type", "source", "TSS"] + header[6:]
     # TODO: bypass this ordering step.
 
     progress.start('Format results')
