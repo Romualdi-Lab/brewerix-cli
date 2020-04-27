@@ -35,7 +35,7 @@ def guess_loi():
     setup_locale()
     check_command_availability(["gatk", "samtools", "bcftools", "hisat2"])
 
-    version = pkg_resources.require("workflow-guess-loi")[0].version
+    version = pkg_resources.require("brewerix-cli")[0].version
 
     print("Workflow guess LOI version: " + version)
     if args.mode == 'bams':
