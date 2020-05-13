@@ -154,7 +154,7 @@ def create_ase_table_from_bams(snps, multi_snps, bams, bed, genome, samples, pro
     # TODO: bypass this ordering step.
 
     progress.start('Format results')
-    create_guess_loi_table(annotated_lines, header, "guess_loi_table.txt")
+    create_guess_loi_table(annotated_lines, header, "brewerTable.txt")
     progress.complete()
 
 

@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="brewerix-cli",
-    version="0.8.0",
+    version="0.9.0",
     author="Romualdi's Lab",
     author_email=[
         "paolo.cavei@gmail.com",
