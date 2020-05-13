@@ -1,29 +1,49 @@
-# GUESS LOI
+# BrewerIX-cli
 
-## Infer from RNAseq data the loss of imprinting of imprinted genes.
-
-## Available species
-* Human hg38
-* Mouse m38
+## Detect loss of imprinting or X-chromosome inactivation erosion from RNAseq data
 
 ## Prerequisite
 
-* Create a BED file with the interesting regions
-* Create the list of SNPs that lay on the potentially imprinted genes and sexual cromosome
-    - Human / Mouse
-    - use gatk utility IndexFeatureFile
-    - Use Paolo's utility extract biallelic.sh [PICARD?]
-* Mind the pseudoautosomal regions
-    - Human / Mouse
+### Software (must be available on PATH)
+* GATK (>= 4.0.0)
+* hisat2
+* samtools
 
-## General Pipiline Workflow
+### Knowledge-base
+To run brewerix-cli you need to create a knowledgebase for your species of interest.
+The knowledge-base must be composed as follows: 
+  * a BED file with the interesting regions
+  * the list of biallelic SNVs that lay on the potentially imprinted genes and sexual chromosomes
+  * the list of multi-allelic SNVs that lay on the potentially imprinted genes and sexual chromosomes (optional)
+  * the genome (with both genome dict and genome fa index '.fai')
+  * the genome indexed for hisat2
 
-* collect the bams
-* check genome index presence and version
-* sort bams if not sorted
-* create the RG tags if not present
-* process with ASER (RNAseq-preprocessing-and-ASER-gatk4.sh)
-    - inputs: potentially imprinted SNPs and BAMS
-* format_imprinting_ASERcount.sh + extract_info-from-id.sh to create the results.
-* annotate-snos with BED file of imprinted genes
-* filter-snp-allele-counts.py
+We build a wrapper to create the knowledge-base called brewerix-prepare-knowledgebase.
+Minimal requirements are 
+
+## General Workflow
+
+This pipeline is able to generate a table of bi-allelic SNVs starting from fastq files.
+
+In the following lines we summarize the major steps:
+* collect fastqs
+* generate the bams filtered by the region of interest
+* Haplotype caller for multi-allelic SNVs (optional)
+  * merge bi-allelic SNVs with the bi-allelic batch (optional)
+* process with ASEReadCounted (GATK) on bi-allelic SNVs
+* merge the sample in the global matrix
+* annotation and additional filtering
+
+The final output is a table that can be analyzed by brewerIX app.
+
+## Quick start
+
+The simplest situation is to perform the analysis of single end samples\
+with the standard pipeline, i.e. using a pre-built set of bi-allelic SNVs. 
+
+The call should look like this one
+
+guess-LOI fqs snps-biallelic.vcf \ <br />
+&ensp; genes-and-sex-regions.bed \ <br />
+&ensp; genome.fa hisat2-index/genome *.fastq.gz
+
