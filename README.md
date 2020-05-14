@@ -19,11 +19,14 @@ The knowledge-base must be composed as follows:
   * the genome indexed for hisat2
 
 We build a wrapper to create the knowledge-base called brewerix-prepare-knowledgebase.
-Minimal requirements are 
+Minimal requirements are
+* the species of interest (must be available on ENSEMBL)
+* a file with the list of chromosomes
+* a file with the list of imprinted genes
 
 ## General Workflow
 
-This pipeline is able to generate a table of bi-allelic SNVs starting from fastq files.
+This pipeline is able to generate a table of bi-allelic SNVs starting from FASTQ files.
 
 In the following lines we summarize the major steps:
 * collect fastqs
@@ -34,7 +37,7 @@ In the following lines we summarize the major steps:
 * merge the sample in the global matrix
 * annotation and additional filtering
 
-The final output is a table that can be analyzed by brewerIX app.
+The final output is a table that can be analyzed by [brewerIX](https://brewerix.bio.unipd.it/) app.
 
 ## Quick start
 
