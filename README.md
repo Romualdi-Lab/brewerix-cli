@@ -10,7 +10,7 @@
 * samtools
 
 ### Knowledge-base
-To run brewerix-cli you need to create a knowledgebase for your species of interest.
+To run brewerix-cli you need to create a knowledge-base for your species of interest.
 The knowledge-base must be composed as follows: 
   * a BED file with the interesting regions
   * the list of biallelic SNVs that lay on the potentially imprinted genes and sexual chromosomes
@@ -18,7 +18,7 @@ The knowledge-base must be composed as follows:
   * the genome (with both genome dict and genome fa index '.fai')
   * the genome indexed for hisat2
 
-We build a wrapper to create the knowledge-base called brewerix-prepare-knowledgebase.
+We built a wrapper to create the knowledge-base called brewerix-prepare-knowledgebase.
 Minimal requirements are
 * the species of interest (must be available on ENSEMBL)
 * a file with the list of chromosomes
@@ -44,7 +44,7 @@ The final output is a table that can be analyzed by [brewerIX](https://brewerix.
 The simplest situation is to perform the analysis of single end samples\
 with the standard pipeline, i.e. using a pre-built set of bi-allelic SNVs. 
 
-The call should look like this one
+The call should look like this one:
 
 guess-LOI fqs snps-biallelic.vcf \ <br />
 &ensp; genes-and-sex-regions.bed \ <br />
