@@ -62,7 +62,7 @@ def guess_loi_from_bams(args):
 
     with Progress(args.progress) as p:
         create_ase_table_from_bams(args.snps, args.multi, args.bams, args.bed, args.genome_dict, samples, p,
-                                   args.threads)
+                                   args.threads, args.gatkmem)
 
 
 def guess_loi_from_fqs(args):
@@ -82,7 +82,8 @@ def guess_loi_from_fqs(args):
             if not exists(bam + '.bai'):
                 call_samtools_index(bam)
 
-        create_ase_table_from_bams(args.snps, args.multi, bams, args.bed, args.genome_dict, samples, p, args.threads)
+        create_ase_table_from_bams(args.snps, args.multi, bams, args.bed, args.genome_dict, samples, p,
+                                   args.threads. args.gatkmem)
 
 
 def split_threads(threads):
@@ -121,7 +122,7 @@ def create_annotated_lines(informative: List, overall: dict, gene_col: int,
         yield collapsed_gene
 
 
-def create_ase_table_from_bams(snps, multi_snps, bams, bed, genome, samples, progress, threads):
+def create_ase_table_from_bams(snps, multi_snps, bams, bed, genome, samples, progress, threads, gatkmem):
     names = [s.name for s in samples]
     bed_idx = read_bed_index(bed)
 
@@ -131,7 +132,7 @@ def create_ase_table_from_bams(snps, multi_snps, bams, bed, genome, samples, pro
         chromosomes = list(bed_idx.keys())
         vcf = resolve_multi_snps(snps, multi_snps, genome, bams, progress, chromosomes, threads)
 
-    table = ase_table(bams, vcf, genome, names, progress, threads)
+    table = ase_table(bams, vcf, genome, names, progress, threads, gatkmem)
 
     snp_lines = annotate_aser_table_from_bed(table, bed_idx)
 

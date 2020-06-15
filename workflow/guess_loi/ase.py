@@ -21,12 +21,12 @@ class AseError(Exception):
     pass
 
 
-def ase_table(bams, snps, genome, samples: List[Sample], progress: Progress, threads: int) -> str:
+def ase_table(bams, snps, genome, samples: List[Sample], progress: Progress, threads: int, gatkmem: int) -> str:
     output = "ASER_table.txt"
     if not exists("do_not_run_ASER"):
 
         with Pool(threads) as pool:
-            args = ((bam, snps, genome, sample) for bam, sample in zip(bams, samples))
+            args = ((bam, snps, genome, sample, gatkmem) for bam, sample in zip(bams, samples))
             ases = dict(progress.track("ASE Read Count", pool.imap_unordered(aser_count, args), len(bams)))
 
         progress.start("ASE merge")
@@ -38,16 +38,21 @@ def ase_table(bams, snps, genome, samples: List[Sample], progress: Progress, thr
 
 
 def aser_count(args):
-    bam, vcf, genome, sample = args
+    bam, vcf, genome, sample, gatkmem = args
     step1 = sample + ".ASER.txt"
+    cmd = ['gatk', "ASEReadCounter"]
 
-    check_call([
-        'gatk', "ASEReadCounter",
+    if gatkmem is not None:
+        cmd += ["--java-options", "-Xmx" + str(gatkmem) + "g"]
+
+    cmd += [
         "-I", bam,
         "-V", vcf,
         "-R", genome,
         "-O", step1,
-    ])
+    ]
+
+    check_call(cmd)
 
     return sample, read_ase(step1)
 

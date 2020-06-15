@@ -1,4 +1,4 @@
-# BrewerIX-cli
+# brewerix-cli
 
 ## Detect loss of imprinting or X-chromosome inactivation erosion from RNAseq data
 
