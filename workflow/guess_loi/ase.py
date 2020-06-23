@@ -42,7 +42,7 @@ def aser_count(args):
     step1 = sample + ".ASER.txt"
     cmd = ['gatk', "ASEReadCounter"]
 
-    if gatkmem is not None:
+    if gatkmem != 0:
         cmd += ["--java-options", "-Xmx" + str(gatkmem) + "g"]
 
     cmd += [
