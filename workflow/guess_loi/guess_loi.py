@@ -83,7 +83,7 @@ def guess_loi_from_fqs(args):
                 call_samtools_index(bam)
 
         create_ase_table_from_bams(args.snps, args.multi, bams, args.bed, args.genome_dict, samples, p,
-                                   args.threads. args.gatkmem)
+                                   args.threads, args.gatkmem)
 
 
 def split_threads(threads):

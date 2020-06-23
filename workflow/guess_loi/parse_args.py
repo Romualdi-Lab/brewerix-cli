@@ -36,7 +36,7 @@ def parse_args():
     parser_fqs.add_argument('--write-progress-to', dest="progress",
                             help="write analysis progress to file")
     parser_fqs.add_argument('--multi', help="the vcf files with multi alleles")
-    parser_fqs.add_argument('--gatk-memory', dest="gatkmem", type=int, default=0,
-                             help="Integer, the number of Gb to give to GATK. 0 (default) means GATK default memory")
+    parser_fqs.add_argument('--gatk-memory', dest="gatkmem", type=int, default=None,
+                             help="Integer, the number of Gb to give to GATK")
 
     return parser.parse_args()
