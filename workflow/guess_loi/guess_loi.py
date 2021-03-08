@@ -9,11 +9,13 @@ import pkg_resources
 
 from workflow.guess_loi.alignments import align
 from workflow.guess_loi.ase import ase_table
+from workflow.guess_loi.base_quality_recalibration import base_recalibration, recalibration
 from workflow.guess_loi.checks import check_file_exists, check_command_availability
 from workflow.guess_loi.concat_vcfs import run_concat_vcfs
 from workflow.guess_loi.filter_count_compress_output import filter_useful_snps, \
     compute_overall_expression
 from workflow.guess_loi.haplotype_caller_rna import haplotype_wrapper
+from workflow.guess_loi.mark_duplicates import mark_duplicates
 from workflow.guess_loi.parse_args import parse_args
 from workflow.guess_loi.progress import Progress
 from workflow.guess_loi.samples import paired_samples, single_samples, Sample
@@ -22,6 +24,7 @@ from workflow.guess_loi.samtools import check_rg_tag, call_samtools_index, split
 from workflow.guess_loi.select_variants import run_select_variants
 from workflow.guess_loi.snp_gene_association import annotate_aser_table_from_bed, read_bed_index, create_gene2tss, \
     create_gene2info
+from workflow.guess_loi.splitNCigarReads import split_N_cigar_reads
 from workflow.guess_loi.table import create_guess_loi_table, collapse_to_gene_info
 from workflow.guess_loi.vcf_related_functions import annotate_vcf_with_heterozygous_genotype, remove_invalid_snv_ids
 
@@ -33,7 +36,7 @@ class InputError(Exception):
 def guess_loi():
     args = parse_args()
     setup_locale()
-    check_command_availability(["gatk", "samtools", "bcftools", "hisat2"])
+    check_command_availability(["gatk", "samtools", "bcftools", "hisat2", "picard"])
 
     version = pkg_resources.require("brewerix-cli")[0].version
 
@@ -60,6 +63,12 @@ def guess_loi_from_bams(args):
             raise InputError("error: bam with no RG tag found: %r", bam)
         samples.append(Sample(sub(r'\.bam$', '', bam), [], bam))
 
+    if args.rm_dup:
+        raise RuntimeError('Not fully implemented')
+        with Progress(args.progress) as p:
+            mark_duplicates(args.bams, samples, p)
+            base_recalibration(bams, samples, args.genome_dict, args.snps, p)
+
     with Progress(args.progress) as p:
         create_ase_table_from_bams(args.snps, args.multi, args.bams, args.bed, args.genome_dict, samples, p,
                                    args.threads, args.gatkmem)
@@ -77,6 +86,15 @@ def guess_loi_from_fqs(args):
             if not exists(bam):
                 align(sample, args.genome_idx, args.bed, bam, hisat_threads, samtools_threads)
             bams.append(bam)
+
+        if args.rm_dup or args.do_recal:
+            bams = mark_duplicates(bams, samples, p, clean=args.clean)
+
+        if args.split_N or args.do_recal:
+            bams = split_N_cigar_reads(bams, samples, args.genome_dict, p, clean=args.clean)
+
+        if args.do_recal:
+            bams = recalibration(bams, samples, args.genome_dict, args.snps, p, clean=args.clean)
 
         for bam in p.track('Index generation', bams):
             if not exists(bam + '.bai'):

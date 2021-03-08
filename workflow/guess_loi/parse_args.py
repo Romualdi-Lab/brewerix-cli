@@ -3,7 +3,7 @@ import argparse
 
 def parse_args():
     parser = argparse.ArgumentParser(description="""
-    Create Tables for GUESS LOY Tool
+    Create Tables for BrewerIX
     """)
 
     subparsers = parser.add_subparsers(dest='mode')
@@ -21,6 +21,10 @@ def parse_args():
     parser_bams.add_argument('--multi', help="the vcf files with multi alleles")
     parser_bams.add_argument('--gatk-memory', dest="gatkmem", type=int, default=None,
                              help="Integer, the number of Gb to give to GATK")
+    parser_bams.add_argument('--remove-duplicates', dest="rm_dup", default=False, action='store_true',
+                            help="Use Picard Tools to mark duplicates. Mark in the very same bam file.")
+    parser_bams.add_argument('--clean', dest="clean", default=False, action='store_true',
+                            help="clean intermediate files")
 
     parser_fqs = subparsers.add_parser('fqs', help='stats from fastqs')
 
@@ -38,5 +42,14 @@ def parse_args():
     parser_fqs.add_argument('--multi', help="the vcf files with multi alleles")
     parser_fqs.add_argument('--gatk-memory', dest="gatkmem", type=int, default=None,
                              help="Integer, the number of Gb to give to GATK")
+    parser_fqs.add_argument('--remove-duplicates', dest="rm_dup", default=False, action='store_true',
+                            help="Use Picard Tools to mark duplicates")
+    parser_fqs.add_argument('--split-N-sigars', dest="split_N", default=False, action='store_true',
+                            help="Use Gatk Tools to split N sigars.")
+    parser_fqs.add_argument('--do-recalibration', dest="do_recal", default=False, action='store_true',
+                            help="Use Gatk Tools to perform recalibration. This activate both split-N-sigar "
+                                 "and remove duplicates options")
+    parser_fqs.add_argument('--clean', dest="clean", default=False, action='store_true',
+                            help="clean intermediate files")
 
     return parser.parse_args()
