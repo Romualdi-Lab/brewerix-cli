@@ -2,6 +2,7 @@ from workflow.guess_loi.general import remove_files
 from workflow.guess_loi.vcf_related_functions import safe_rename
 from subprocess import check_call
 from os.path import join, exists
+from os import environ
 from tempfile import TemporaryDirectory
 
 
@@ -18,7 +19,9 @@ def mark_duplicates(bams, samples, progress, clean=False):
 
             tmp_bam = join(wdir, sample.name + ".bam")
             tmp_matrix = join(wdir, out_matrix)
-            my_env = {**os.environ, 'USE_JDK_DEFLATER':'true', 'USE_JDK_INFLATER':'true'}
+            my_env = dict(environ)
+            my_env.update("USE_JDK_DEFLATER": 'true', 'USE_JDK_INFLATER': 'true')
+
             check_call(["picard", "MarkDuplicates",
                         "I=", bam,
                         "O=", tmp_bam,
