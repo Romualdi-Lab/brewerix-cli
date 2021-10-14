@@ -18,12 +18,12 @@ def mark_duplicates(bams, samples, progress, clean=False):
 
             tmp_bam = join(wdir, sample.name + ".bam")
             tmp_matrix = join(wdir, out_matrix)
-
+            my_env = {**os.environ, 'USE_JDK_DEFLATER':'true', 'USE_JDK_INFLATER':'true'}
             check_call(["picard", "MarkDuplicates",
                         "I=", bam,
                         "O=", tmp_bam,
                         "M=", tmp_matrix],
-                       env={'USE_JDK_DEFLATER':'true', 'USE_JDK_INFLATER':'true'})
+                       env=my_env)
             safe_rename(tmp_bam, out_bam)
             safe_rename(tmp_matrix, out_matrix)
 
