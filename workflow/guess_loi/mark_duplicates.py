@@ -20,7 +20,7 @@ def mark_duplicates(bams, samples, progress, clean=False):
             tmp_bam = join(wdir, sample.name + ".bam")
             tmp_matrix = join(wdir, out_matrix)
             my_env = dict(environ)
-            my_env.update("USE_JDK_DEFLATER": 'true', 'USE_JDK_INFLATER': 'true')
+            my_env.update({"USE_JDK_DEFLATER": 'true', 'USE_JDK_INFLATER': 'true'})
 
             check_call(["picard", "MarkDuplicates",
                         "I=", bam,
