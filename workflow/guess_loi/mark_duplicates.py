@@ -22,7 +22,8 @@ def mark_duplicates(bams, samples, progress, clean=False):
             check_call(["picard", "MarkDuplicates",
                         "I=", bam,
                         "O=", tmp_bam,
-                        "M=", tmp_matrix])
+                        "M=", tmp_matrix],
+                       env={'USE_JDK_DEFLATER':'true', 'USE_JDK_INFLATER':'true'})
             safe_rename(tmp_bam, out_bam)
             safe_rename(tmp_matrix, out_matrix)
 
